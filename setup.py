@@ -15,7 +15,7 @@ json_files = package_files('hbp_validation_framework', 'jsonTreeViewer')
 
 setup(
     name='hbp_validation_framework',
-    version='0.4.0',
+    version='0.4.1',
     packages=['hbp_validation_framework'],
     package_data={'': json_files},
     url='https://github.com/HumanBrainProject/hbp-validation-client',
