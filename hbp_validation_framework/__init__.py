@@ -323,13 +323,14 @@ class BaseClient(object):
         else:
             raise Exception("Error: " + data.content)
 
-    def _download_resource(self, uuid):
+    def _download_resource(self, uuid, target_loc="."):
         """
         Downloads the resource specified by the UUID on the HBP Collaboratory.
         Target can be a file or a folder. Returns a list containing absolute
         filepaths of all downloaded files.
         """
         files_downloaded = []
+        original_loc = os.getcwd()
 
         base_url = "https://services.humanbrainproject.eu/storage/v1/api/entity/"
         url = base_url + "?uuid=" + uuid
@@ -338,10 +339,12 @@ class BaseClient(object):
             raise Exception("The provided 'uuid' is invalid!")
         else:
             data = data.json()
+            dirpath = target_loc
             if data["entity_type"] == "folder":
-                if not os.path.exists(data["name"]):
-                    os.makedirs(data["name"])
-                os.chdir(data["name"])
+                dirpath = os.path.join(target_loc, data["name"])
+                if not os.path.exists(dirpath):
+                    os.makedirs(dirpath)
+                os.chdir(dirpath)
                 base_url = "https://services.humanbrainproject.eu/storage/v1/api/folder/"
                 url = base_url + uuid + "/children/"
                 folder_data = requests.get(url, auth=self.auth, verify=self.verify)
@@ -353,11 +356,13 @@ class BaseClient(object):
                 base_url = "https://services.humanbrainproject.eu/storage/v1/api/file/"
                 url = base_url + uuid + "/content/"
                 file_data = requests.get(url, auth=self.auth, verify=self.verify)
-                with open(data["name"], "w") as filename:
+                filepath = os.path.join(dirpath, data["name"])
+                with open(filepath, "wb+") as filename:
                     filename.write("%s" % file_data.content)
                     files_downloaded.append(os.path.realpath(filename.name))
             else:
                 raise Exception("Downloading of resources currently supported only for files and folders!")
+        os.chdir(original_loc)
         return files_downloaded
 
     @classmethod
