@@ -1417,17 +1417,17 @@ class ModelCatalog(BaseClient):
 
         .. code-block:: JSON
 
-    {
-        "prod": {
-            "url": "https://validation-v1.brainsimulation.eu",
-            "client_id": "3ae21f28-0302-4d28-8581-15853ad6107d"
-        },
-        "dev_test": {
-            "url": "https://localhost:8000",
-            "client_id": "90c719e0-29ce-43a2-9c53-15cb314c2d0b",
-            "verify_ssl": false
+        {
+            "prod": {
+                "url": "https://validation-v1.brainsimulation.eu",
+                "client_id": "3ae21f28-0302-4d28-8581-15853ad6107d"
+            },
+            "dev_test": {
+                "url": "https://localhost:8000",
+                "client_id": "90c719e0-29ce-43a2-9c53-15cb314c2d0b",
+                "verify_ssl": false
+            }
         }
-    }
 
     Examples
     --------
