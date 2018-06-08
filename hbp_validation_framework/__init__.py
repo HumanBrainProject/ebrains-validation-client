@@ -27,6 +27,11 @@ from requests.auth import AuthBase
 from .datastores import URI_SCHEME_MAP
 
 try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path  # Python 2 backport
+
+try:
     from jupyter_collab_storage import oauth_token_handler
     have_collab_token_handler = True
 except ImportError:
@@ -1385,6 +1390,7 @@ class ModelCatalog(BaseClient):
     Edit model description                 :meth:`edit_model`
     Get valid attribute values             :meth:`get_attribute_options`
     Get model instance                     :meth:`get_model_instance`
+    Download model instance                :meth:`download_model_instance`
     List model instances                   :meth:`list_model_instances`
     Add new model instance                 :meth:`add_model_instance`
     Edit existing model instance           :meth:`edit_model_instance`
@@ -1914,6 +1920,152 @@ class ModelCatalog(BaseClient):
             return model_instance_json["instances"][0]
         else:
             raise Exception("Error in retrieving model instance. Possibly invalid input data.")
+
+    def download_model_instance(self, instance_path="", instance_id="", model_id="", alias="", version="", target_loc="."):
+        """Download files/directory corresponding to an existing model instance.
+
+        Files/directory corresponding to a model instance to be downloaded. The model
+        instance can be specified in the following ways (in order of priority):
+
+        1. load from a local JSON file specified via `instance_path`
+        2. specify `instance_id` corresponding to model instance in model catalog
+        3. specify `model_id` and `version`
+        4. specify `alias` (of the model) and `version`
+
+        Parameters
+        ----------
+        instance_path : string
+            Location of local JSON file with model instance metadata.
+        instance_id : UUID
+            System generated unique identifier associated with model instance.
+        model_id : UUID
+            System generated unique identifier associated with model description.
+        alias : string
+            User-assigned unique identifier associated with model description.
+        version : string
+            User-assigned identifier (unique for each model) associated with model instance.
+        target_loc : string
+            Directory path (relative/absolute) where files should be downloaded and saved. Default is current location.
+            Existing files, if any, at the target location will be overwritten!
+
+        Returns
+        -------
+        string
+            Absolute path of the downloaded file/directory.
+
+        Note
+        ----
+        Existing files, if any, at the target location will be overwritten!
+
+        Examples
+        --------
+        >>> file_path = model_catalog.download_model_instance(instance_id="a035f2b2-fe2e-42fd-82e2-4173a304263b")
+        """
+
+        model_source = self.get_model_instance(instance_path=instance_path, instance_id=instance_id, model_id=model_id, alias=alias, version=version)["source"]
+        if model_source[-1]=="/":
+            model_source = model_source[:-1]    # remove trailing '/'
+        if not os.path.exists(target_loc):
+            os.makedirs(target_loc) # create directory if it doesn't exist
+        fileList = []
+
+        if model_source.startswith("https://collab.humanbrainproject.eu/#/collab/"):
+            # ***** Handles Collab storage urls *****
+            entity_uuid = model_source.split("?state=uuid%3D")[-1]
+            fileList = self._download_resource(entity_uuid, target_loc=target_loc)
+        elif model_source.startswith("swift://cscs.ch/"):
+            # ***** Handles CSCS private urls *****
+            try:
+                from hbp_archive import Container
+            except ImportError:
+                print("Please install the following package: hbp_archive")
+                return
+
+            name_parts = model_source.split("swift://cscs.ch/")[1].split("/")
+            if name_parts[0].startswith("bp00sp"):  # presuming all project names start like this
+                prj_name = name_parts[0]
+                ind = 1
+            else:
+                prj_name = None
+                ind = 0
+            cont_name = name_parts[ind]
+            entity_path = "/".join(name_parts[ind+1:])
+            if not "." in name_parts[-1]:
+                dirname = name_parts[-1]
+                pre_path = entity_path.replace(dirname, "", 1)
+
+            print("------------------------------------------------------------")
+            print("NOTE: The target location is inside a private CSCS container")
+            print("------------------------------------------------------------")
+            username = raw_input("Please enter your CSCS username: ")
+            container = Container(cont_name, username, project=prj_name)
+            contents = container.list()
+            contents_match = [x for x in contents if x.name.startswith(entity_path)]
+            for item in contents_match:
+                if 'pre_path' in locals():
+                    localdir = os.path.join(target_loc, entity_path.replace(pre_path,"",1))
+                else:
+                    localdir = target_loc
+                if not "directory" in item.content_type: # download files
+                    outpath = container.download(item.name, local_directory=localdir, with_tree=False, overwrite=False)
+                    if outpath:
+                        fileList.append(outpath)
+        elif model_source.startswith("https://object.cscs.ch/"):
+            # ***** Handles CSCS public urls (file or folder) *****
+            req = requests.head(model_source)
+            if req.status_code == 200:
+                if "directory" in req.headers["Content-Type"]:
+                    base_source = "/".join(model_source.split("/")[:6])
+                    model_rel_source = "/".join(model_source.split("/")[6:])
+                    dir_name = model_source.split("/")[-1]
+                    pre_path = model_rel_source.replace(dir_name, "", 1)
+                    req = requests.get(base_source)
+                    contents = req.text.split("\n")
+                    contents_match = [x for x in contents if x.startswith(model_rel_source)]
+                    for item in contents_match:
+                        if "." in item: # download files
+                            outpath = os.path.join(target_loc, os.path.join(item.replace(pre_path,"",1)))
+                            Path(os.path.dirname(outpath)).mkdir(parents=True, exist_ok=True)
+                            req = requests.get(os.path.join(base_source,item), stream=True)
+                            with open(outpath, 'wb+') as mfile:
+                                for chunk in req.iter_content(chunk_size=1024):
+                                    mfile.write(chunk)
+                            fileList.append(outpath)
+                else:
+                    req = requests.get(model_source, stream=True)
+                    filename = model_source.split('/')[-1]
+                    outpath = os.path.join(target_loc, filename)
+                    req = requests.get(model_source, stream=True)
+                    with open(outpath, 'wb+') as mfile:
+                        for chunk in req.iter_content(chunk_size=1024):
+                            mfile.write(chunk)
+                    fileList.append(outpath)
+        else:
+            # ***** Handles ModelDB and external urls (only file; not folder) *****
+            req = requests.head(model_source)
+            if req.status_code == 200:
+                if model_source.startswith("https://senselab.med.yale.edu/modeldb/") and model_source.endswith("&mime=application/zip"):
+                    filename = req.headers["Content-Disposition"].split("filename=")[1]
+                else:
+                    filename = model_source.split('/')[-1]
+                outpath = os.path.join(target_loc, filename)
+                req = requests.get(model_source, stream=True)
+                with open(outpath, 'wb+') as mfile:
+                    for chunk in req.iter_content(chunk_size=1024):
+                        mfile.write(chunk)
+                fileList.append(outpath)
+
+        if len(fileList) > 0:
+            flag = True
+            if len(fileList) == 1:
+                outpath = fileList[0]
+            else:
+                outpath = os.path.dirname(os.path.commonprefix(fileList))
+            return os.path.abspath(outpath.encode('ascii'))
+        else:
+            print("\nSource location: {}".format(model_source))
+            print("Could not download the specified file(s)!")
+            return None
 
     def list_model_instances(self, instance_path="", model_id="", alias=""):
         """Retrieve list of model instances belonging to a specified model.
