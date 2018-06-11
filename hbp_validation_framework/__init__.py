@@ -328,7 +328,7 @@ class BaseClient(object):
         else:
             raise Exception("Error: " + data.content)
 
-    def _download_resource(self, uuid, target_loc="."):
+    def _download_resource(self, uuid, local_directory="."):
         """
         Downloads the resource specified by the UUID on the HBP Collaboratory.
         Target can be a file or a folder. Returns a list containing absolute
@@ -344,9 +344,9 @@ class BaseClient(object):
             raise Exception("The provided 'uuid' is invalid!")
         else:
             data = data.json()
-            dirpath = target_loc
+            dirpath = local_directory
             if data["entity_type"] == "folder":
-                dirpath = os.path.join(target_loc, data["name"])
+                dirpath = os.path.join(local_directory, data["name"])
                 if not os.path.exists(dirpath):
                     os.makedirs(dirpath)
                 os.chdir(dirpath)
@@ -1921,7 +1921,7 @@ class ModelCatalog(BaseClient):
         else:
             raise Exception("Error in retrieving model instance. Possibly invalid input data.")
 
-    def download_model_instance(self, instance_path="", instance_id="", model_id="", alias="", version="", target_loc="."):
+    def download_model_instance(self, instance_path="", instance_id="", model_id="", alias="", version="", local_directory="."):
         """Download files/directory corresponding to an existing model instance.
 
         Files/directory corresponding to a model instance to be downloaded. The model
@@ -1944,7 +1944,7 @@ class ModelCatalog(BaseClient):
             User-assigned unique identifier associated with model description.
         version : string
             User-assigned identifier (unique for each model) associated with model instance.
-        target_loc : string
+        local_directory : string
             Directory path (relative/absolute) where files should be downloaded and saved. Default is current location.
             Existing files, if any, at the target location will be overwritten!
 
@@ -1965,14 +1965,14 @@ class ModelCatalog(BaseClient):
         model_source = self.get_model_instance(instance_path=instance_path, instance_id=instance_id, model_id=model_id, alias=alias, version=version)["source"]
         if model_source[-1]=="/":
             model_source = model_source[:-1]    # remove trailing '/'
-        if not os.path.exists(target_loc):
-            os.makedirs(target_loc) # create directory if it doesn't exist
+        if not os.path.exists(local_directory):
+            os.makedirs(local_directory) # create directory if it doesn't exist
         fileList = []
 
         if model_source.startswith("https://collab.humanbrainproject.eu/#/collab/"):
             # ***** Handles Collab storage urls *****
             entity_uuid = model_source.split("?state=uuid%3D")[-1]
-            fileList = self._download_resource(entity_uuid, target_loc=target_loc)
+            fileList = self._download_resource(entity_uuid, local_directory=local_directory)
         elif model_source.startswith("swift://cscs.ch/"):
             # ***** Handles CSCS private urls *****
             try:
@@ -2003,9 +2003,9 @@ class ModelCatalog(BaseClient):
             contents_match = [x for x in contents if x.name.startswith(entity_path)]
             for item in contents_match:
                 if 'pre_path' in locals():
-                    localdir = os.path.join(target_loc, entity_path.replace(pre_path,"",1))
+                    localdir = os.path.join(local_directory, entity_path.replace(pre_path,"",1))
                 else:
-                    localdir = target_loc
+                    localdir = local_directory
                 if not "directory" in item.content_type: # download files
                     outpath = container.download(item.name, local_directory=localdir, with_tree=False, overwrite=False)
                     if outpath:
@@ -2024,7 +2024,7 @@ class ModelCatalog(BaseClient):
                     contents_match = [x for x in contents if x.startswith(model_rel_source)]
                     for item in contents_match:
                         if "." in item: # download files
-                            outpath = os.path.join(target_loc, os.path.join(item.replace(pre_path,"",1)))
+                            outpath = os.path.join(local_directory, os.path.join(item.replace(pre_path,"",1)))
                             Path(os.path.dirname(outpath)).mkdir(parents=True, exist_ok=True)
                             req = requests.get(os.path.join(base_source,item), stream=True)
                             with open(outpath, 'wb+') as mfile:
@@ -2034,7 +2034,7 @@ class ModelCatalog(BaseClient):
                 else:
                     req = requests.get(model_source, stream=True)
                     filename = model_source.split('/')[-1]
-                    outpath = os.path.join(target_loc, filename)
+                    outpath = os.path.join(local_directory, filename)
                     req = requests.get(model_source, stream=True)
                     with open(outpath, 'wb+') as mfile:
                         for chunk in req.iter_content(chunk_size=1024):
@@ -2048,7 +2048,7 @@ class ModelCatalog(BaseClient):
                     filename = req.headers["Content-Disposition"].split("filename=")[1]
                 else:
                     filename = model_source.split('/')[-1]
-                outpath = os.path.join(target_loc, filename)
+                outpath = os.path.join(local_directory, filename)
                 req = requests.get(model_source, stream=True)
                 with open(outpath, 'wb+') as mfile:
                     for chunk in req.iter_content(chunk_size=1024):
