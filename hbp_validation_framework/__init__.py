@@ -311,65 +311,6 @@ class BaseClient(object):
         else:
             raise Exception("Something went wrong. Status code {} from NMPI, expected 302".format(rNMPI1.status_code))
 
-    def _translate_URL_to_UUID(self, path):
-        """
-        Can take a path such as `collab:///5165/hippoCircuit_20171027-142713`
-        with 5165 being the Collab ID and the latter part being the target folder
-        name, and translate this to the UUID on the HBP Collaboratory storage.
-        The target can be a file or folder.
-        """
-        base_url = "https://services.humanbrainproject.eu/storage/v1/api/entity/"
-        if path.startswith("collab://"):
-            path = path[len("collab://"):]
-        url = base_url + "?path=" + path
-        data = requests.get(url, auth=self.auth, verify=self.verify)
-        if data.status_code == 200:
-            return data.json()["uuid"]
-        else:
-            raise Exception("Error: " + data.content)
-
-    def _download_resource(self, uuid, local_directory="."):
-        """
-        Downloads the resource specified by the UUID on the HBP Collaboratory.
-        Target can be a file or a folder. Returns a list containing absolute
-        filepaths of all downloaded files.
-        """
-        files_downloaded = []
-        original_loc = os.getcwd()
-
-        base_url = "https://services.humanbrainproject.eu/storage/v1/api/entity/"
-        url = base_url + "?uuid=" + uuid
-        data = requests.get(url, auth=self.auth, verify=self.verify)
-        if data.status_code != 200:
-            raise Exception("The provided 'uuid' is invalid!")
-        else:
-            data = data.json()
-            dirpath = local_directory
-            if data["entity_type"] == "folder":
-                dirpath = os.path.join(local_directory, data["name"])
-                if not os.path.exists(dirpath):
-                    os.makedirs(dirpath)
-                os.chdir(dirpath)
-                base_url = "https://services.humanbrainproject.eu/storage/v1/api/folder/"
-                url = base_url + uuid + "/children/"
-                folder_data = requests.get(url, auth=self.auth, verify=self.verify)
-                folder_sublist = folder_data.json()["results"]
-                for entity in folder_sublist:
-                    files_downloaded.extend(self._download_resource(entity["uuid"]))
-                os.chdir('..')
-            elif data["entity_type"] == "file":
-                base_url = "https://services.humanbrainproject.eu/storage/v1/api/file/"
-                url = base_url + uuid + "/content/"
-                file_data = requests.get(url, auth=self.auth, verify=self.verify)
-                filepath = os.path.join(dirpath, data["name"])
-                with open(filepath, "wb+") as filename:
-                    filename.write("%s" % file_data.content)
-                    files_downloaded.append(os.path.realpath(filename.name))
-            else:
-                raise Exception("Downloading of resources currently supported only for files and folders!")
-        os.chdir(original_loc)
-        return files_downloaded
-
     @classmethod
     def from_existing(cls, client):
         """Used to easily create a TestLibrary if you already have a ModelCatalog, or vice versa"""
@@ -1104,15 +1045,7 @@ class TestLibrary(BaseClient):
             raise Exception("Error in editing test instance. Response = " + str(response.content))
 
     def _load_reference_data(self, uri):
-        # Load the reference data ("observations"). For now this is assumed
-        # to be in JSON format or a compressed file format.
-        # We should support other data formats in future.
-        #
-        # Note: currently when using zip/tar files, the base directory must
-        # contain a JSON file with the same filename (exluding extension) as
-        # the zip/tar file. This is loaded as observation data and any other
-        # files or directories can be used by the test for plotting etc.
-        # These requirements may be relaxed in the future.
+        # Load the reference data ("observations").
         parse_result = urlparse(uri)
         datastore = URI_SCHEME_MAP[parse_result.scheme](auth=self.auth)
         observation_data = datastore.load_data(uri)
