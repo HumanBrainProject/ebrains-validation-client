@@ -487,8 +487,9 @@ def generate_report(hbp_username="", environment="production", result_list=[], o
             pdf.output(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"), 'F')
 
             # Additional Files
-            storage_uuid = test_library._translate_URL_to_UUID(result_data[result_id]["results_storage"])
-            file_list = test_library._download_resource(storage_uuid)
+            datastore = CollabDataStore(auth=model_catalog.auth)
+            entity_uuid = datastore._translate_URL_to_UUID(result_data[result_id]["results_storage"])
+            file_list = datastore.download_data_using_uuid(entity_uuid)
 
             merger = PdfFileMerger()
             merger.append(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"))
