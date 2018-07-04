@@ -79,11 +79,8 @@ class CollabDataStore(object):
         """
         if not self.authorized:
             self.authorize(self._auth)
-        try:
-            entity = self.doc_client.get_entity_by_query(path=path)
-        except Exception as e:
-            print(e)
-        return path
+        entity = self.doc_client.get_entity_by_query(path=path)
+        return entity["uuid"]
 
     def _translate_UUID_to_URL(self, uuid):
         """
@@ -93,10 +90,7 @@ class CollabDataStore(object):
         """
         if not self.authorized:
             self.authorize(self._auth)
-        try:
-            path = self.doc_client.get_entity_path(uuid)
-        except Exception as e:
-            print(e)
+        path = self.doc_client.get_entity_path(uuid)
         return "collab:/{}".format(path)
 
     def upload_data(self, file_paths):
