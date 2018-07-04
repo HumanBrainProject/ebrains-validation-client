@@ -256,8 +256,79 @@ class HTTPDataStore(object):
             return local_paths[0]
 
 
+class SwiftDataStore(object):
+    """
+    A class for downloading data from CSCS Swift storage.
+    Note: data from public containers can also be downloaded via `HTTPDataStore`
+    """
+    def __init__(self, **kwargs):
+        pass
+
+    def upload_data(self, file_paths):
+        raise NotImplementedError("The SwiftDataStore does not support uploading data.")
+
+    def get_container(self, remote_path):
+        try:
+            from hbp_archive import Container
+        except ImportError:
+            print("Please install the following package: hbp_archive")
+            return
+
+        name_parts = remote_path.split("swift://cscs.ch/")[1].split("/")
+        if name_parts[0].startswith("bp00sp"):  # presuming all project names start like this
+            prj_name = name_parts[0]
+            ind = 1
+        else:
+            prj_name = None
+            ind = 0
+        cont_name = name_parts[ind]
+        entity_path = "/".join(name_parts[ind+1:])
+        pre_path = None
+        if not "." in name_parts[-1]:
+            dirname = name_parts[-1]
+            pre_path = entity_path.replace(dirname, "", 1)
+
+        print("------------------------------------------------------------")
+        print("NOTE: The target location is inside a private CSCS container")
+        print("------------------------------------------------------------")
+        username = raw_input("Please enter your CSCS username: ")
+        container = Container(cont_name, username, project=prj_name)
+        if prj_name:
+            container.project._get_container_info()
+        return container, entity_path, pre_path
+
+    def download_data(self, remote_paths, local_directory="."):
+        if isinstance(remote_paths, str):
+            remote_paths = [remote_paths]
+        local_paths = []
+        for remote_path in remote_paths:
+            container, entity_path, pre_path = self.get_container(remote_path)
+            contents = container.list()
+            contents_match = [x for x in contents if x.name.startswith(entity_path)]
+            for item in contents_match:
+                if pre_path:
+                    localdir = os.path.join(local_directory, entity_path.replace(pre_path,"",1))
+                else:
+                    localdir = local_directory
+                if not "directory" in item.content_type: # download files
+                    outpath = container.download(item.name, local_directory=localdir, with_tree=False, overwrite=False)
+                    if outpath:
+                        local_paths.append(outpath)
+        return local_paths
+
+    def load_data(self, remote_path):
+        container, entity_path, pre_path = self.get_container(remote_path)
+        content = container.read(entity_path)
+        content_type = mimetypes.guess_type(remote_path)[0]
+        if content_type == "application/json":
+            return json.loads(content)
+        else:
+            return content
+
+
 URI_SCHEME_MAP = {
     "collab": CollabDataStore,
     "http": HTTPDataStore,
-    "https": HTTPDataStore
+    "https": HTTPDataStore,
+    "swift": SwiftDataStore
 }
