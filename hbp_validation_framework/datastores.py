@@ -134,7 +134,7 @@ class CollabDataStore(object):
             etag = self.doc_client.upload_file_content(file_entity['uuid'],
                                                        source=local_path)
 
-        return "collab://{}".format(self.doc_client.get_entity_path(base_folder_id))
+        return "collab:/{}".format(self.doc_client.get_entity_path(base_folder_id))
 
     def _make_folders(self, folder_path, parent):
         for i, folder_name in enumerate(folder_path.split(os.path.sep)):
