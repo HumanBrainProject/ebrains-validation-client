@@ -231,9 +231,18 @@ class HTTPDataStore(object):
         raise NotImplementedError("The HTTPDataStore does not support uploading data.")
 
     def download_data(self, remote_paths, local_directory="."):
+        if isinstance(remote_paths, str):
+            remote_paths = [remote_paths]
         local_paths = []
         for url in remote_paths:
-            local_path = os.path.join(local_directory, os.path.basename(urlparse(url).path))
+            req = requests.head(url)
+            if req.status_code == 200:
+                if url.startswith("https://senselab.med.yale.edu/modeldb/") and url.endswith("&mime=application/zip"):
+                    filename = req.headers["Content-Disposition"].split("filename=")[1]
+                else:
+                    filename = url.split('/')[-1]
+            local_path = os.path.join(local_directory, filename)
+            #local_path = os.path.join(local_directory, os.path.basename(urlparse(url).path))
             filename, headers = urlretrieve(url, local_path)
             local_paths.append(filename)
         return local_paths
