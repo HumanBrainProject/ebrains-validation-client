@@ -1898,51 +1898,18 @@ class ModelCatalog(BaseClient):
         model_source = self.get_model_instance(instance_path=instance_path, instance_id=instance_id, model_id=model_id, alias=alias, version=version)["source"]
         if model_source[-1]=="/":
             model_source = model_source[:-1]    # remove trailing '/'
-        if not os.path.exists(local_directory):
-            os.makedirs(local_directory) # create directory if it doesn't exist
+        Path(local_directory).mkdir(parents=True, exist_ok=True)
         fileList = []
 
         if model_source.startswith("https://collab.humanbrainproject.eu/#/collab/"):
             # ***** Handles Collab storage urls *****
             entity_uuid = model_source.split("?state=uuid%3D")[-1]
-            fileList = self._download_resource(entity_uuid, local_directory=local_directory)
+            datastore = URI_SCHEME_MAP["collab"](auth=self.auth)
+            fileList = datastore.download_data_using_uuid(entity_uuid, local_directory=local_directory)
         elif model_source.startswith("swift://cscs.ch/"):
             # ***** Handles CSCS private urls *****
-            try:
-                from hbp_archive import Container
-            except ImportError:
-                print("Please install the following package: hbp_archive")
-                return
-
-            name_parts = model_source.split("swift://cscs.ch/")[1].split("/")
-            if name_parts[0].startswith("bp00sp"):  # presuming all project names start like this
-                prj_name = name_parts[0]
-                ind = 1
-            else:
-                prj_name = None
-                ind = 0
-            cont_name = name_parts[ind]
-            entity_path = "/".join(name_parts[ind+1:])
-            if not "." in name_parts[-1]:
-                dirname = name_parts[-1]
-                pre_path = entity_path.replace(dirname, "", 1)
-
-            print("------------------------------------------------------------")
-            print("NOTE: The target location is inside a private CSCS container")
-            print("------------------------------------------------------------")
-            username = raw_input("Please enter your CSCS username: ")
-            container = Container(cont_name, username, project=prj_name)
-            contents = container.list()
-            contents_match = [x for x in contents if x.name.startswith(entity_path)]
-            for item in contents_match:
-                if 'pre_path' in locals():
-                    localdir = os.path.join(local_directory, entity_path.replace(pre_path,"",1))
-                else:
-                    localdir = local_directory
-                if not "directory" in item.content_type: # download files
-                    outpath = container.download(item.name, local_directory=localdir, with_tree=False, overwrite=False)
-                    if outpath:
-                        fileList.append(outpath)
+            datastore = URI_SCHEME_MAP["swift"]()
+            fileList = datastore.download_data(str(model_source), local_directory=local_directory)
         elif model_source.startswith("https://object.cscs.ch/"):
             # ***** Handles CSCS public urls (file or folder) *****
             req = requests.head(model_source)
@@ -1951,42 +1918,21 @@ class ModelCatalog(BaseClient):
                     base_source = "/".join(model_source.split("/")[:6])
                     model_rel_source = "/".join(model_source.split("/")[6:])
                     dir_name = model_source.split("/")[-1]
-                    pre_path = model_rel_source.replace(dir_name, "", 1)
                     req = requests.get(base_source)
                     contents = req.text.split("\n")
-                    contents_match = [x for x in contents if x.startswith(model_rel_source)]
-                    for item in contents_match:
-                        if "." in item: # download files
-                            outpath = os.path.join(local_directory, os.path.join(item.replace(pre_path,"",1)))
-                            Path(os.path.dirname(outpath)).mkdir(parents=True, exist_ok=True)
-                            req = requests.get(os.path.join(base_source,item), stream=True)
-                            with open(outpath, 'wb+') as mfile:
-                                for chunk in req.iter_content(chunk_size=1024):
-                                    mfile.write(chunk)
-                            fileList.append(outpath)
+                    files_match = [os.path.join(base_source, x) for x in contents if x.startswith(model_rel_source) and "." in x]
+                    local_directory = os.path.join(local_directory, dir_name)
+                    Path(local_directory).mkdir(parents=True, exist_ok=True)
                 else:
-                    req = requests.get(model_source, stream=True)
-                    filename = model_source.split('/')[-1]
-                    outpath = os.path.join(local_directory, filename)
-                    req = requests.get(model_source, stream=True)
-                    with open(outpath, 'wb+') as mfile:
-                        for chunk in req.iter_content(chunk_size=1024):
-                            mfile.write(chunk)
-                    fileList.append(outpath)
+                    files_match = [model_source]
+                datastore = URI_SCHEME_MAP["http"]()
+                fileList = datastore.download_data(files_match, local_directory=local_directory)
+            else:
+                raise FileNotFoundError("Requested file/folder not found: {}".format(model_source))
         else:
             # ***** Handles ModelDB and external urls (only file; not folder) *****
-            req = requests.head(model_source)
-            if req.status_code == 200:
-                if model_source.startswith("https://senselab.med.yale.edu/modeldb/") and model_source.endswith("&mime=application/zip"):
-                    filename = req.headers["Content-Disposition"].split("filename=")[1]
-                else:
-                    filename = model_source.split('/')[-1]
-                outpath = os.path.join(local_directory, filename)
-                req = requests.get(model_source, stream=True)
-                with open(outpath, 'wb+') as mfile:
-                    for chunk in req.iter_content(chunk_size=1024):
-                        mfile.write(chunk)
-                fileList.append(outpath)
+            datastore = URI_SCHEME_MAP["http"]()
+            fileList = datastore.download_data(str(model_source), local_directory=local_directory)
 
         if len(fileList) > 0:
             flag = True
