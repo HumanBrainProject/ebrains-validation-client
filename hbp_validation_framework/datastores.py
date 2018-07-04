@@ -165,6 +165,9 @@ class CollabDataStore(object):
         return content
 
     def download_data(self, remote_paths, local_directory="."):
+        """
+        Note: This can only download files (not directories)
+        """
         if isinstance(remote_paths, str):
             remote_paths = [remote_paths]
         local_paths = []
@@ -181,6 +184,8 @@ class CollabDataStore(object):
         Downloads the resource specified by the UUID on the HBP Collaboratory.
         Target can be a file or a folder. Returns a list containing absolute
         filepaths of all downloaded files.
+        Note: This can recursively download files and sub-directories
+              within a specified directory
         """
         file_uuids = []
 
