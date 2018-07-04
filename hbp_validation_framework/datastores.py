@@ -3,6 +3,8 @@ Defines classes for interacting with remote data stores.
 
 Currently supported:
     - HBP Collaboratory storage
+    - Swift CSCS storage
+    - ModelDB
 
 Other possibilities:
     - Fenix storage
@@ -27,6 +29,11 @@ import mimetypes
 import requests
 from hbp_service_client.storage_service.api import ApiClient
 
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path  # Python 2 backport
+
 mimetypes.init()
 
 
@@ -45,7 +52,7 @@ class FileSystemDataStore(object):
 
 class CollabDataStore(object):
     """
-    A class for uploading data to HBP Collaboratory storage.
+    A class for uploading and downloading data from HBP Collaboratory storage.
     """
 
     def __init__(self, collab_id=None, base_folder=None, auth=None, **kwargs):
@@ -63,6 +70,34 @@ class CollabDataStore(object):
             auth = self._auth
         self.doc_client = ApiClient.new(auth.token)
         self._authorized = True
+
+    def _translate_URL_to_UUID(self, path):
+        """
+        Can take a path such as `collab://5165/hippoCircuit_20171027-142713`
+        with 5165 being the Collab ID and the latter part being the collab path,
+        and translate this to the UUID on the HBP Collaboratory storage.
+        """
+        if not self.authorized:
+            self.authorize(self._auth)
+        try:
+            entity = self.doc_client.get_entity_by_query(path=path)
+        except Exception as e:
+            print(e)
+        return path
+
+    def _translate_UUID_to_URL(self, uuid):
+        """
+        Can take a UUID on the HBP Collaboratory storage path and translate this
+        to a path such as `collab://5165/hippoCircuit_20171027-142713` with 5165
+        being the Collab ID and the latter part being the collab storage path.
+        """
+        if not self.authorized:
+            self.authorize(self._auth)
+        try:
+            path = self.doc_client.get_entity_path(uuid)
+        except Exception as e:
+            print(e)
+        return "collab:/{}".format(path)
 
     def upload_data(self, file_paths):
         if not self.authorized:
@@ -141,9 +176,38 @@ class CollabDataStore(object):
         local_paths = []
         for remote_path in remote_paths:
             local_path = os.path.join(local_directory, os.path.basename(remote_path))
+            Path(os.path.dirname(local_path)).mkdir(parents=True, exist_ok=True)
             with open(local_path, "wb") as fp:
                 fp.write(self._download_data_content(remote_path))
             local_paths.append(local_path)
+        return local_paths
+
+    def download_data_using_uuid(self, uuid, local_directory="."):
+        """
+        Downloads the resource specified by the UUID on the HBP Collaboratory.
+        Target can be a file or a folder. Returns a list containing absolute
+        filepaths of all downloaded files.
+        """
+        file_uuids = []
+
+        if not self.authorized:
+            self.authorize(self._auth)
+        entity = self.doc_client.get_entity_details(uuid)
+        if entity["entity_type"] == 'file':
+            file_uuids.append(uuid)
+        elif entity["entity_type"] == 'folder':
+            items = self.doc_client.list_folder_content(uuid)["results"]
+            for item in items:
+                file_uuids.extend(self.download_data_using_uuid(item["uuid"], local_directory=os.path.join(local_directory, entity["name"])))
+            return file_uuids
+        else:
+            raise Exception("Downloading of resources currently supported only for files and folders!")
+
+        remote_paths = []
+        local_paths = []
+        for uuid in file_uuids:
+            remote_paths.append(self._translate_UUID_to_URL(uuid))
+        local_paths.extend(self.download_data(remote_paths=remote_paths, local_directory=local_directory))
         return local_paths
 
     def load_data(self, remote_path):
