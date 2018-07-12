@@ -805,6 +805,8 @@ class TestLibrary(BaseClient):
         2. specify `instance_id` corresponding to test instance in test library
         3. specify `test_id` and `version`
         4. specify `alias` (of the test) and `version`
+        5. for (3) and (4) above, if `version` is not specified,
+           then the latest test version is retrieved
 
         Parameters
         ----------
@@ -827,10 +829,11 @@ class TestLibrary(BaseClient):
         Examples
         --------
         >>> test_instance = test_library.get_test_instance(test_id="7b63f87b-d709-4194-bae1-15329daf3dec", version="1.0")
+        >>> test_instance = test_library.get_test_instance(test_id="7b63f87b-d709-4194-bae1-15329daf3dec")
         """
 
-        if instance_path == "" and instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
-            raise Exception("instance_path or instance_id or (test_id, version) or (alias, version) needs to be provided for finding a test instance.")
+        if instance_path == "" and instance_id == "" and test_id == "" and alias == "":
+            raise Exception("instance_path or instance_id or test_id or alias needs to be provided for finding a test instance.")
         if instance_path:
             if os.path.isfile(instance_path):
                 # instance_path is a local path
@@ -843,8 +846,12 @@ class TestLibrary(BaseClient):
                 url = self.url + "/test-instances/?id=" + instance_id + "&format=json"
             elif test_id and version:
                 url = self.url + "/test-instances/?test_definition_id=" + test_id + "&version=" + version + "&format=json"
-            else:
+            elif alias and version:
                 url = self.url + "/test-instances/?test_alias=" + alias + "&version=" + version + "&format=json"
+            elif test_id and not version:
+                url = self.url + "/test-instances/?test_definition_id=" + test_id + "&format=json"
+            else:
+                url = self.url + "/test-instances/?test_alias=" + alias + "&format=json"
             test_instance_json = requests.get(url, auth=self.auth, verify=self.verify)
 
         if test_instance_json.status_code != 200:
@@ -852,6 +859,8 @@ class TestLibrary(BaseClient):
         test_instance_json = test_instance_json.json()
         if len(test_instance_json["test_codes"]) == 1:
             return test_instance_json["test_codes"][0]
+        elif len(test_instance_json["test_codes"]) > 1:
+            return max(test_instance_json["test_codes"], key=lambda x:x['timestamp'])
         else:
             raise Exception("Error in retrieving test instance. Possibly invalid input data.")
 
