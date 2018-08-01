@@ -473,6 +473,8 @@ class TestLibrary(BaseClient):
         2. specify `instance_id` corresponding to test instance in test library
         3. specify `test_id` and `version`
         4. specify `alias` (of the test) and `version`
+        Note: for (3) and (4) above, if `version` is not specified,
+              then the latest test version is retrieved
 
         Parameters
         ----------
@@ -509,9 +511,6 @@ class TestLibrary(BaseClient):
         if test_path == "" and instance_id == "" and test_id == "" and alias == "":
             raise Exception("One of the following needs to be provided for finding the required test:\n"
                             "test_path, instance_id, test_id or alias")
-        elif instance_path == "" and instance_id == "" and  version == "":
-            raise Exception("One of the following needs to be provided for finding the required test instance:\n"
-                            "instance_path, instance_id or version")
         else:
             if instance_id:
                 # `instance_id` is sufficient for identifying both test and instance
@@ -805,8 +804,8 @@ class TestLibrary(BaseClient):
         2. specify `instance_id` corresponding to test instance in test library
         3. specify `test_id` and `version`
         4. specify `alias` (of the test) and `version`
-        5. for (3) and (4) above, if `version` is not specified,
-           then the latest test version is retrieved
+        Note: for (3) and (4) above, if `version` is not specified,
+              then the latest test version is retrieved
 
         Parameters
         ----------
