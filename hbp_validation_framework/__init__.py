@@ -1497,7 +1497,11 @@ class ModelCatalog(BaseClient):
         >>> models = model_catalog.list_models(cell_type="Pyramidal Cell", brain_region="Hippocampus")
         """
 
+        valid_filters = ["app_id", "name", "alias", "author", "organization", "species", "brain_region", "cell_type", "model_scope", "abstraction_level", "owner", "project", "license"]
         params = locals()["filters"]
+        for filter in params:
+            if filter not in valid_filters:
+                raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
         url = self.url + "/models/?"+urlencode(params)+"&format=json"
         models = requests.get(url, auth=self.auth, verify=self.verify).json()
         return models["models"]
@@ -1747,6 +1751,41 @@ class ModelCatalog(BaseClient):
         else:
             raise Exception("Error in updating model. Response = " + str(response.json()))
 
+    def delete_model(self, model_id="", alias=""):
+        """Delete a specific model description by its model_id or alias.
+
+        A specific model description can be deleted from the model catalog, along with all
+        associated model instances, images and results, in the following ways (in order of priority):
+
+        1. specify the `model_id`
+        2. specify the `alias` (of the model)
+
+        Parameters
+        ----------
+        model_id : UUID
+            System generated unique identifier associated with model description.
+        alias : string
+            User-assigned unique identifier associated with model description.
+
+        Examples
+        --------
+        >>> model = model_catalog.delete_model(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model = model_catalog.delete_model(alias="B1")
+        """
+
+        if model_id == "" and alias == "":
+            raise Exception("Model ID or alias needs to be provided for deleting a model.")
+        elif model_id != "":
+            url = self.url + "/models/?id=" + model_id + "&format=json"
+        else:
+            url = self.url + "/models/?alias=" + alias + "&format=json"
+
+        model_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_json))
+        elif model_json.status_code != 200:
+            raise Exception("Error in deleting model. Response = " + str(model_json))
+
     def get_attribute_options(self, param=""):
         """Retrieve valid values for attributes.
 
@@ -1782,10 +1821,11 @@ class ModelCatalog(BaseClient):
         if param == "":
             param = "all"
 
-        if param in ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]:
+        valid_params = ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]
+        if param in valid_params:
             url = self.url + "/authorizedcollabparameterrest/?python_client=true&parameters="+param+"&format=json"
         else:
-            raise Exception("Attribute, if specified, has to be one from: cell_type, test_type, score_type, brain_region, model_scope, abstraction_level, data_modalities, species, all]")
+            raise Exception("Specified attribute '{}' is invalid. Valid attributes: {}".format(param, valid_params))
         data = requests.get(url, auth=self.auth, verify=self.verify).json()
         return ast.literal_eval(json.dumps(data))
 
@@ -1982,7 +2022,7 @@ class ModelCatalog(BaseClient):
         model_instances_json = model_instances_json.json()
         return model_instances_json["instances"]
 
-    def add_model_instance(self, model_id="", alias="", source="", version="", description="", morphology="", parameters="", code_format="", hash=""):
+    def add_model_instance(self, model_id="", alias="", source="", version="", description="", parameters="", code_format="", hash="", morphology=""):
         """Register a new model instance.
 
         This allows to add a new instance of an existing model in the model catalog.
@@ -2000,14 +2040,14 @@ class ModelCatalog(BaseClient):
             User-assigned identifier (unique for each model) associated with model instance.
         description : string, optional
             Text describing this specific model instance.
-        morphology : string, optional
-            Complete path to the morphology file employed for this model.
         parameters : string, optional
             Any additional parameters to be submitted to model, or used by it, at runtime.
         code_format : string, optional
             Indicates the language/platform in which the model was developed.
         hash : string, optional
             Similar to a checksum; can be used to identify model instances from their implementation.
+        morphology : string / list, optional
+            URL(s) to the morphology file(s) employed in this model.
 
         Returns
         -------
@@ -2027,7 +2067,8 @@ class ModelCatalog(BaseClient):
                                                   description="basic model variant",
                                                   parameters="",
                                                   code_format="py",
-                                                  hash="")
+                                                  hash="",
+                                                  morphology="")
         """
 
         instance_data = locals()
@@ -2052,7 +2093,7 @@ class ModelCatalog(BaseClient):
         if response.status_code == 201:
             return response.json()["uuid"][0]
         else:
-            raise Exception("Error in adding model instance. Response = " + str(response.json()))
+            raise Exception("Error in adding model instance. Response = " + str(response))
 
     def find_model_instance_else_add(self, model_obj):
         """Find existing model instance; else create a new instance
@@ -2100,7 +2141,7 @@ class ModelCatalog(BaseClient):
             model_instance_uuid = model_obj.model_instance_uuid
         return model_instance_uuid
 
-    def edit_model_instance(self, instance_id="", model_id="", alias="", source=None, version=None, description=None, morphology=None, parameters=None, code_format=None, hash=None):
+    def edit_model_instance(self, instance_id="", model_id="", alias="", source=None, version=None, description=None, parameters=None, code_format=None, hash=None, morphology=None):
         """Edit an existing model instance.
 
         This allows to edit an instance of an existing model in the model catalog.
@@ -2129,14 +2170,14 @@ class ModelCatalog(BaseClient):
             User-assigned identifier (unique for each model) associated with model instance.
         description : string, optional
             Text describing this specific model instance.
-        morphology : string, optional
-            Complete path to the morphology file employed for this model.
         parameters : string, optional
             Any additional parameters to be submitted to model, or used by it, at runtime.
         code_format : string, optional
             Indicates the language/platform in which the model was developed.
         hash : string, optional
             Similar to a checksum; can be used to identify model instances from their implementation.
+        morphology : string / list, optional
+            URL(s) to the morphology file(s) employed in this model.
 
         Returns
         -------
@@ -2151,7 +2192,8 @@ class ModelCatalog(BaseClient):
                                                 description="passive model variant",
                                                 parameters="",
                                                 code_format="py",
-                                                hash="")
+                                                hash="",
+                                                morphology="")
         """
 
         if instance_id == "" and (model_id == "" or version == "") and (alias == "" or version == ""):
@@ -2317,7 +2359,7 @@ class ModelCatalog(BaseClient):
         if response.status_code == 201:
             return response.json()["uuid"][0]
         else:
-            raise Exception("Error in adding image (figure). Response = " + str(response.json()))
+            raise Exception("Error in adding image (figure). Response = " + str(response))
 
     def edit_model_image(self, image_id="", url=None, caption=None):
         """Edit an existing image (figure) metadata.
