@@ -180,7 +180,7 @@ def test_getValid_many(params):
     model_catalog, model_id = params
     with pytest.raises(TypeError) as excinfo:
         data = model_catalog.get_attribute_options("cell_type", "brain_region")
-    assert "takes at most 2 arguments" in str(excinfo.value)
+    assert "takes at most 2 arguments" in str(excinfo.value) or "takes from 1 to 2 positional arguments" in str(excinfo.value)
 
 #3.4) Invalid parameter
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
