@@ -2,8 +2,8 @@ import pytest
 from hbp_validation_framework import ModelCatalog
 from datetime import datetime
 
-HBP_USERNAME = "shailesh"#"ValidationTester"
-HBP_PASSWORD = "HBP!paris5"#"PyNNis2good!"
+HBP_USERNAME = os.environ.get('HBP_USER')
+HBP_PASSWORD = os.environ.get('HBP_PASS')
 
 @pytest.fixture(scope="session")
 def params():

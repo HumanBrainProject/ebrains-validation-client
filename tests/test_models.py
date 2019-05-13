@@ -3,8 +3,8 @@ import uuid
 from hbp_validation_framework import ModelCatalog
 from datetime import datetime
 
-HBP_USERNAME = "ValidationTester"
-HBP_PASSWORD = "PyNNis2good!"
+HBP_USERNAME = os.environ.get('HBP_USER')
+HBP_PASSWORD = os.environ.get('HBP_PASS')
 
 @pytest.mark.dependency()
 def test_mc_authenticate():
