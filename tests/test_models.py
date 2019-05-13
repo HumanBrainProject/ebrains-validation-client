@@ -23,7 +23,7 @@ def test_getModel_none(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model()
-    assert excinfo.value.message == "Model ID or alias needs to be provided for finding a model."
+    assert str(excinfo.value) == "Model ID or alias needs to be provided for finding a model."
 
 #1.2) Using model_id
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -54,7 +54,7 @@ def test_getModel_invalid_id_format(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model(model_id="abcde")
-    assert "Error in retrieving model." in excinfo.value.message
+    assert "Error in retrieving model." in str(excinfo.value)
 
 #1.6) Using invalid model_id value
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -62,7 +62,7 @@ def test_getModel_invalid_id_value(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model(model_id=str(uuid.uuid4()))
-    assert "Error in retrieving model." in excinfo.value.message
+    assert "Error in retrieving model." in str(excinfo.value)
 
 #1.7) Using invalid alias
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -70,7 +70,7 @@ def test_getModel_invalid_alias(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model(alias="<>(@#%^)")
-    assert "Error in retrieving model description." in excinfo.value.message
+    assert "Error in retrieving model description." in str(excinfo.value)
 
 #1.8) Using empty model_id
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -78,7 +78,7 @@ def test_getModel_empty_id(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model(model_id="")
-    assert "Model ID or alias needs to be provided for finding a model." in excinfo.value.message
+    assert "Model ID or alias needs to be provided for finding a model." in str(excinfo.value)
 
 #1.9) Using empty alias
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -86,7 +86,7 @@ def test_getModel_empty_alias(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         model = model_catalog.get_model(alias="")
-    assert "Model ID or alias needs to be provided for finding a model." in excinfo.value.message
+    assert "Model ID or alias needs to be provided for finding a model." in str(excinfo.value)
 
 #1.10) Hide instances
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -140,7 +140,7 @@ def test_getList_invalid(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         models = model_catalog.list_models(abcde="12345")
-    assert "The specified filter 'abcde' is an invalid filter!" in excinfo.value.message
+    assert "The specified filter 'abcde' is an invalid filter!" in str(excinfo.value)
 
 #2.5) Filter with no matches
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -180,7 +180,7 @@ def test_getValid_many(params):
     model_catalog, model_id = params
     with pytest.raises(TypeError) as excinfo:
         data = model_catalog.get_attribute_options("cell_type", "brain_region")
-    assert "takes at most 2 arguments" in excinfo.value.message
+    assert "takes at most 2 arguments" in str(excinfo.value)
 
 #3.4) Invalid parameter
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -188,7 +188,7 @@ def test_getValid_invalid(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
         data = model_catalog.get_attribute_options("abcde")
-    assert "Specified attribute 'abcde' is invalid." in excinfo.value.message
+    assert "Specified attribute 'abcde' is invalid." in str(excinfo.value)
 
 """
 4] Register a new model on the model catalog
@@ -214,7 +214,7 @@ def test_addModel_missingParam(params):
                        brain_region="basal ganglia", species="Mus musculus",
                        owner="Shailesh Appukuttan", project="SP 6.4", license="BSD 3-Clause",
                        description="This is a test entry! Please ignore.")
-    assert "This field may not be blank." in excinfo.value.message
+    assert "This field may not be blank." in str(excinfo.value)
 
 #4.3) Invalid value for parameter (brain_region)
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -229,7 +229,7 @@ def test_addModel_invalidParam(params):
                        brain_region="ABCDE", species="Mus musculus",
                        owner="Shailesh Appukuttan", project="SP 6.4", license="BSD 3-Clause",
                        description="This is a test entry! Please ignore.")
-    assert "brain_region = 'ABCDE' is invalid." in excinfo.value.message
+    assert "brain_region = 'ABCDE' is invalid." in str(excinfo.value)
 
 #4.4) Valid model without alias; without instances and images
 @pytest.mark.dependency(depends=["test_mc_authenticate"])
@@ -280,7 +280,7 @@ def test_addModel_repeat_alias_nodetails(params):
                        brain_region="basal ganglia", species="Mus musculus",
                        owner="Shailesh Appukuttan", project="SP 6.4", license="BSD 3-Clause",
                        description="This is a test entry! Please ignore.")
-    assert "model with this alias already exists." in excinfo.value.message
+    assert "model with this alias already exists." in str(excinfo.value)
 
 #4.7) Valid model with alias; with instances and images
 # Note: using current timestamp as alias to ensure uniqueness

@@ -29,7 +29,7 @@ def test_addInstance_no_id(params):
                                                             hash="",
                                                             morphology="",
                                                             description="")
-    assert excinfo.value.message == "Model ID needs to be provided for finding the model."
+    assert str(excinfo.value) == "Model ID needs to be provided for finding the model."
 
 #3) With invalid model_id format
 def test_addInstance_invalid_id_format(params):
@@ -43,7 +43,7 @@ def test_addInstance_invalid_id_format(params):
                                                            hash="",
                                                            morphology="",
                                                            description="")
-    assert "Error in adding model instance." in excinfo.value.message
+    assert "Error in adding model instance." in str(excinfo.value)
 
 #4) With invalid model_id value
 def test_addInstance_invalid_id_value(params):
@@ -57,7 +57,7 @@ def test_addInstance_invalid_id_value(params):
                                                            hash="",
                                                            morphology="",
                                                            description="")
-    assert "Error in adding model instance." in excinfo.value.message
+    assert "Error in adding model instance." in str(excinfo.value)
 
 #5) With duplicate version number
 def test_addInstance_duplicate_version(params):
@@ -79,4 +79,4 @@ def test_addInstance_duplicate_version(params):
                                                            hash="",
                                                            morphology="",
                                                            description="")
-    assert "Error in adding model instance." in excinfo.value.message
+    assert "Error in adding model instance." in str(excinfo.value)
