@@ -1,3 +1,4 @@
+import os
 from hbp_validation_framework import BaseClient
 
 HBP_USERNAME = os.environ.get('HBP_USER')

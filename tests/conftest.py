@@ -1,3 +1,4 @@
+import os
 import pytest
 from hbp_validation_framework import ModelCatalog
 from datetime import datetime
