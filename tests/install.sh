@@ -7,5 +7,5 @@ pip install coverage coveralls
 pip install pytest
 pip install pytest-sugar
 pip install pytest-dependency
-pip install python-coveralls
+pip install pytest-cov
 python setup.py install
