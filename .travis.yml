@@ -12,6 +12,6 @@ matrix:
 install:
   - source tests/install.sh
 script:
-  - pytest
+  - pytest --disable-pytest-warnings --cov=hbp_validation_framework tests/
 after_success:
   - coveralls
