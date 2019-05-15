@@ -300,7 +300,7 @@ def test_downloadInstance_valid_id_directory(params):
     model_instance = model_catalog.get_model_instance(model_id=model_id, version="2.0a")
     file_path = model_catalog.download_model_instance(instance_id=model_instance["id"], local_directory="./temp")
     assert os.path.isfile(file_path)
-    assert "/temp" in os.path.dirname(file_path)
+    assert "/temp".encode() in os.path.dirname(file_path)
 
 #5.4) With valid details - model_id, version
 def test_downloadInstance_valid_model_version(params):
