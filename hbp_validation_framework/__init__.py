@@ -1752,7 +1752,7 @@ class ModelCatalog(BaseClient):
             raise Exception("Error in updating model. Response = " + str(response))
 
     def delete_model(self, model_id="", alias=""):
-        """Delete a specific model description by its model_id or alias.
+        """ONLY FOR SUPERUSERS: Delete a specific model description by its model_id or alias.
 
         A specific model description can be deleted from the model catalog, along with all
         associated model instances, images and results, in the following ways (in order of priority):
@@ -1766,6 +1766,10 @@ class ModelCatalog(BaseClient):
             System generated unique identifier associated with model description.
         alias : string
             User-assigned unique identifier associated with model description.
+
+        Note
+        ----
+        * This feature is only for superusers!
 
         Examples
         --------
@@ -2234,6 +2238,55 @@ class ModelCatalog(BaseClient):
         else:
             raise Exception("Error in editing model instance. Response = " + str(response.json()))
 
+    def delete_model_instance(self, instance_id="", model_id="", alias=""):
+        """Delete an existing model instance.
+
+        This allows to delete an instance of an existing model in the model catalog.
+        The model instance can be specified in the following ways (in order of priority):
+
+        1. specify `instance_id` corresponding to model instance in model catalog
+        2. specify `model_id` and `version`
+        3. specify `alias` (of the model) and `version`
+
+        Parameters
+        ----------
+        instance_id : UUID
+            System generated unique identifier associated with model instance.
+        model_id : UUID
+            System generated unique identifier associated with model description.
+        alias : string
+            User-assigned unique identifier associated with model description.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model = model_catalog.delete_model_instance(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model = model_catalog.delete_model_instance(alias="B1", version="1.0")
+        """
+
+        if instance_id == "" and (model_id == "" or not version) and (alias == "" or not version):
+            raise Exception("instance_id or (model_id, version) or (alias, version) needs to be provided for finding a model instance.")
+
+        if instance_id:
+            id = instance_id    # as needed by API
+        if alias:
+            model_alias = alias # as needed by API
+
+        if instance_id:
+            url = self.url + "/model-instances/?id=" + instance_id + "&format=json"
+        elif model_id and version:
+            url = self.url + "/model-instances/?model_id=" + model_id + "&version=" + version + "&format=json"
+        else:
+            url = self.url + "/model-instances/?model_alias=" + alias + "&version=" + version + "&format=json"
+        model_instance_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_instance_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_instance_json))
+        elif model_instance_json.status_code != 200:
+            raise Exception("Error in deleting model instance. Response = " + str(model_instance_json))
+
     def get_model_image(self, image_id=""):
         """Retrieve image info from a model description.
 
@@ -2413,6 +2466,36 @@ class ModelCatalog(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception("Error in editing image (figure). Response = " + str(response.json()))
+
+    def delete_model_image(self, image_id=""):
+        """ONLY FOR SUPERUSERS: Delete an image from a model description.
+
+        This allows to delete an image (figure) info from the model catalog.
+        The `image_id` needs to be specified as input parameter.
+
+        Parameters
+        ----------
+        image_id : UUID
+            System generated unique identifier associated with image (figure).
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_image = model_catalog.delete_model_image(image_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
+        """
+
+        if not image_id:
+            raise Exception("image_id needs to be provided for finding a specific model image (figure).")
+        else:
+            url = self.url + "/images/?id=" + image_id + "&format=json"
+        model_image_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_image_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_image_json))
+        elif model_image_json.status_code != 200:
+            raise Exception("Error in deleting model image. Response = " + str(model_image_json))
 
 
 def _have_internet_connection():
