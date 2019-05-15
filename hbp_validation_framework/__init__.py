@@ -1749,7 +1749,7 @@ class ModelCatalog(BaseClient):
         if response.status_code == 202:
             return response.json()["uuid"]
         else:
-            raise Exception("Error in updating model. Response = " + str(response.json()))
+            raise Exception("Error in updating model. Response = " + str(response))
 
     def delete_model(self, model_id="", alias=""):
         """Delete a specific model description by its model_id or alias.
@@ -2196,7 +2196,7 @@ class ModelCatalog(BaseClient):
                                                 morphology="")
         """
 
-        if instance_id == "" and (model_id == "" or version == "") and (alias == "" or version == ""):
+        if instance_id == "" and (model_id == "" or not version) and (alias == "" or not version):
             raise Exception("instance_id or (model_id, version) or (alias, version) needs to be provided for finding a model instance.")
 
         if instance_id:
@@ -2273,6 +2273,7 @@ class ModelCatalog(BaseClient):
         """Retrieve all images (figures) associated with a model.
 
         This can be retrieved in the following ways (in order of priority):
+
         1. specify `model_id`
         2. specify `alias` (of the model)
 
