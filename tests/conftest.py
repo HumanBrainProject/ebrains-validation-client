@@ -37,9 +37,8 @@ def params(request):
                             "caption":"HBP Logo"}])
    return model_catalog, model_id
 
-#
-# def pytest_sessionfinish(session, exitstatus):
-#    model_catalog = ModelCatalog(username=HBP_USERNAME, password=HBP_PASSWORD, environment="production")
-#    models = model_catalog.list_models(app_id="359330", author="Shailesh Appukuttan")
-#    for model in models:
-#       model_catalog.delete_model(model["id"])
+def pytest_sessionfinish(session, exitstatus):
+   model_catalog = ModelCatalog(username=HBP_USERNAME, password=HBP_PASSWORD, environment="production")
+   models = model_catalog.list_models(app_id="359330", author="Shailesh Appukuttan")
+   for model in models:
+      model_catalog.delete_model(model["id"])

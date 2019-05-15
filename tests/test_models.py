@@ -184,7 +184,7 @@ def test_addModel_none(params):
 def test_addModel_missingParam(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
-        model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add2"
         model = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                        alias=model_name, organization="HBP-SP6",
                        private=False, cell_type="granule cell", model_scope="single cell",
@@ -198,7 +198,7 @@ def test_addModel_missingParam(params):
 def test_addModel_invalidParam(params):
     model_catalog, model_id = params
     with pytest.raises(Exception) as excinfo:
-        model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add3"
         model = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                        alias=model_name, author="Shailesh Appukuttan", organization="HBP-SP6",
                        private=False, cell_type="granule cell", model_scope="single cell",
@@ -211,7 +211,7 @@ def test_addModel_invalidParam(params):
 #4.4) Valid model without alias; without instances and images
 def test_addModel_valid_noalias_nodetails(params):
     model_catalog, model_id = params
-    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add4"
     model = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                    author="Shailesh Appukuttan", organization="HBP-SP6",
                    private=False, cell_type="granule cell", model_scope="single cell",
@@ -225,7 +225,7 @@ def test_addModel_valid_noalias_nodetails(params):
 # Note: using current timestamp as alias to ensure uniqueness
 def test_addModel_valid_withalias_nodetails(params):
     model_catalog, model_id = params
-    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add5"
     model = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                    alias=model_name, author="Shailesh Appukuttan", organization="HBP-SP6",
                    private=False, cell_type="granule cell", model_scope="single cell",
@@ -238,7 +238,7 @@ def test_addModel_valid_withalias_nodetails(params):
 #4.6) Invalid model with repeated alias; without instances and images
 def test_addModel_repeat_alias_nodetails(params):
     model_catalog, model_id = params
-    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "ABCDE"
+    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add6"
     model1 = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                    alias=model_name, author="Shailesh Appukuttan", organization="HBP-SP6",
                    private=False, cell_type="granule cell", model_scope="single cell",
@@ -260,7 +260,7 @@ def test_addModel_repeat_alias_nodetails(params):
 # Note: using current timestamp as alias to ensure uniqueness
 def test_addModel_valid_withalias_withdetails(params):
     model_catalog, model_id = params
-    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    model_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + "_add7"
     model = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
                    alias=model_name, author="Shailesh Appukuttan", organization="HBP-SP6",
                    private=False, cell_type="granule cell", model_scope="single cell",
