@@ -549,7 +549,6 @@ class TestLibrary(BaseClient):
 
         * name
         * alias
-        * version
         * author
         * species
         * age
@@ -579,6 +578,12 @@ class TestLibrary(BaseClient):
         >>> tests = test_library.list_tests(test_type="single cell activity")
         >>> tests = test_library.list_tests(test_type="single cell activity", cell_type="Pyramidal Cell")
         """
+
+        valid_filters = ["name", "alias", "author", "species", "age", "brain_region", "cell_type", "data_modality", "test_type", "score_type", "model_scope", "abstraction_level", "data_type", "publication"]
+        params = locals()["filters"]
+        for filter in params:
+            if filter not in valid_filters:
+                raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
 
         params = locals()["filters"]
         url = self.url + "/tests/?"+urlencode(params)+"&format=json"
@@ -795,6 +800,45 @@ class TestLibrary(BaseClient):
             return response.json()["uuid"]
         else:
             raise Exception("Error in editing test. Response = " + str(response.json()))
+
+    def delete_test(self, test_id="", alias=""):
+        """ONLY FOR SUPERUSERS: Delete a specific test definition by its test_id or alias.
+
+        A specific test definition can be deleted from the test library, along with all
+        associated test instances, in the following ways (in order of priority):
+
+        1. specify the `test_id`
+        2. specify the `alias` (of the test)
+
+        Parameters
+        ----------
+        test_id : UUID
+            System generated unique identifier associated with test definition.
+        alias : string
+            User-assigned unique identifier associated with test definition.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> test = test_library.delete_test(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test = test_library.delete_test(alias="B1")
+        """
+
+        if test_id == "" and alias == "":
+            raise Exception("test ID or alias needs to be provided for deleting a test.")
+        elif test_id != "":
+            url = self.url + "/tests/?id=" + test_id + "&format=json"
+        else:
+            url = self.url + "/tests/?alias=" + alias + "&format=json"
+
+        test_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if test_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(test_json))
+        elif test_json.status_code != 200:
+            raise Exception("Error in deleting test. Response = " + str(test_json))
 
     def get_test_instance(self, instance_path="", instance_id="", test_id="", alias="", version=""):
         """Retrieve a specific test instance definition from the test library.
@@ -1054,6 +1098,59 @@ class TestLibrary(BaseClient):
         else:
             raise Exception("Error in editing test instance. Response = " + str(response.content))
 
+    def delete_test_instance(self, instance_id="", test_id="", alias="", version=""):
+        """ONLY FOR SUPERUSERS: Delete an existing test instance.
+
+        This allows to delete an instance of an existing test in the test library.
+        The test instance can be specified in the following ways (in order of priority):
+
+        1. specify `instance_id` corresponding to test instance in test library
+        2. specify `test_id` and `version`
+        3. specify `alias` (of the test) and `version`
+
+        Parameters
+        ----------
+        instance_id : UUID
+            System generated unique identifier associated with test instance.
+        test_id : UUID
+            System generated unique identifier associated with test definition.
+        alias : string
+            User-assigned unique identifier associated with test definition.
+        version : string
+            User-assigned unique identifier associated with test instance.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> test = test_library.delete_model_instance(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test = test_library.delete_model_instance(alias="B1", version="1.0")
+        """
+
+        if instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
+            raise Exception("instance_id or (test_id, version) or (alias, version) needs to be provided for finding a test instance.")
+
+        if instance_id:
+            id = instance_id    # as needed by API
+        if test_id:
+            test_definition_id = test_id    # as needed by API
+        if alias:
+            test_alias = alias  # as needed by API
+
+        if instance_id:
+            url = self.url + "/test-instances/?id=" + instance_id + "&format=json"
+        elif test_id and version:
+            url = self.url + "/test-instances/?test_definition_id=" + test_id + "&version=" + version + "&format=json"
+        else:
+            url = self.url + "/test-instances/?test_alias=" + alias + "&version=" + version + "&format=json"
+        test_instance_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if test_instance_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(test_instance_json))
+        elif test_instance_json.status_code != 200:
+            raise Exception("Error in deleting test instance. Response = " + str(test_instance_json))
+
     def _load_reference_data(self, uri):
         # Load the reference data ("observations").
         parse_result = urlparse(uri)
@@ -1096,10 +1193,11 @@ class TestLibrary(BaseClient):
         if param == "":
             param = "all"
 
-        if param in ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]:
+        valid_params = ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]
+        if param in valid_params:
             url = self.url + "/authorizedcollabparameterrest/?python_client=true&parameters="+param+"&format=json"
         else:
-            raise Exception("Attribute, if specified, has to be one from: cell_type, test_type, score_type, brain_region, model_scope, abstraction_level, data_modalities, species, all]")
+            raise Exception("Specified attribute '{}' is invalid. Valid attributes: {}".format(param, valid_params))
         data = requests.get(url, auth=self.auth, verify=self.verify).json()
         return ast.literal_eval(json.dumps(data))
 
@@ -2238,8 +2336,8 @@ class ModelCatalog(BaseClient):
         else:
             raise Exception("Error in editing model instance. Response = " + str(response.json()))
 
-    def delete_model_instance(self, instance_id="", model_id="", alias=""):
-        """Delete an existing model instance.
+    def delete_model_instance(self, instance_id="", model_id="", alias="", version=""):
+        """ONLY FOR SUPERUSERS: Delete an existing model instance.
 
         This allows to delete an instance of an existing model in the model catalog.
         The model instance can be specified in the following ways (in order of priority):
@@ -2256,6 +2354,8 @@ class ModelCatalog(BaseClient):
             System generated unique identifier associated with model description.
         alias : string
             User-assigned unique identifier associated with model description.
+        version : string
+            User-assigned unique identifier associated with model instance.
 
         Note
         ----
