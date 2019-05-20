@@ -955,7 +955,7 @@ class TestLibrary(BaseClient):
         test_instances_json = test_instances_json.json()
         return test_instances_json["test_codes"]
 
-    def add_test_instance(self, test_id="", alias="", repository="", path="", version=""):
+    def add_test_instance(self, test_id="", alias="", repository="", path="", version="", description="", parameters=""):
         """Register a new test instance.
 
         This allows to add a new instance to an existing test in the test library.
@@ -973,6 +973,10 @@ class TestLibrary(BaseClient):
             Python path (not filesystem path) to test source code within Python package.
         version : string
             User-assigned identifier (unique for each test) associated with test instance.
+        description : string, optional
+            Text describing this specific test instance.
+        parameters : string, optional
+            Any additional parameters to be submitted to test, or used by it, at runtime.
 
         Returns
         -------
@@ -992,15 +996,14 @@ class TestLibrary(BaseClient):
                                         version="3.0")
         """
 
-        if test_id:
-            test_definition_id = test_id    # as needed by API
+        test_definition_id = test_id    # as needed by API
         instance_data = locals()
         for key in ["self", "test_id"]:
             instance_data.pop(key)
 
         if test_definition_id == "" and alias == "":
-            raise Exception("test_id needs to be provided for finding the model.")
-            #raise Exception("test_id or alias needs to be provided for finding the model.")
+            raise Exception("test_id needs to be provided for finding the test.")
+            #raise Exception("test_id or alias needs to be provided for finding the test.")
         elif test_definition_id != "":
             url = self.url + "/test-instances/?format=json"
         else:
@@ -1015,7 +1018,7 @@ class TestLibrary(BaseClient):
         else:
             raise Exception("Error in adding test instance. Response = " + str(response))
 
-    def edit_test_instance(self, instance_id="", test_id="", alias="", repository=None, path=None, version=None):
+    def edit_test_instance(self, instance_id="", test_id="", alias="", repository=None, path=None, version=None, description=None, parameters=None):
         """Edit an existing test instance.
 
         This allows to edit an instance of an existing test in the test library.
@@ -1044,6 +1047,10 @@ class TestLibrary(BaseClient):
             Python path (not filesystem path) to test source code within Python package.
         version : string
             User-assigned identifier (unique for each test) associated with test instance.
+        description : string, optional
+            Text describing this specific test instance.
+        parameters : string, optional
+            Any additional parameters to be submitted to test, or used by it, at runtime.
 
         Returns
         -------
@@ -1058,15 +1065,16 @@ class TestLibrary(BaseClient):
                                         version="4.0")
         """
 
-        if instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
+        if instance_id == "" and (test_id == "" or not version) and (alias == "" or not version):
             raise Exception("instance_id or (test_id, version) or (alias, version) needs to be provided for finding a test instance.")
 
         if instance_id:
-            id = instance_id    # as needed by API
+            id = instance_id                # as needed by API
         if test_id:
             test_definition_id = test_id    # as needed by API
         if alias:
-            test_alias = alias  # as needed by API
+            test_alias = alias              # as needed by API
+
         instance_data = locals()
         for key in ["self", "test_id", "alias"]:
             instance_data.pop(key)

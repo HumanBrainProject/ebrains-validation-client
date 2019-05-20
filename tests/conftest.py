@@ -58,7 +58,8 @@ def myTestID(testLibrary):
                         data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                         data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                         data_type="Mean, SD", publication="Testing et al., 2019",
-                        version="1.0", path="http://www.abcde.com", repository="ModuleName.Tests.TestName")
+                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+   isinstance_id = testLibrary.add_test_instance(test_id=test_id, version="2.0", repository="http://www.12345.com", path="ModuleName.Tests.TestName", parameters="", description="")
    return test_id
 
 def pytest_sessionfinish(session, exitstatus):

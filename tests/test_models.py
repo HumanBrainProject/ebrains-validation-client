@@ -137,14 +137,14 @@ def test_getList_nomatch(modelCatalog):
 """
 
 #3.1) No parameters (all)
-def test_getValid_none(modelCatalog):
+def test_getModelValid_none(modelCatalog):
     model_catalog = modelCatalog
     data = model_catalog.get_attribute_options()
     assert isinstance(data, dict)
     assert len(data.keys()) > 0
 
 #3.2) One parameter
-def test_getValid_one(modelCatalog):
+def test_getModelValid_one(modelCatalog):
     model_catalog = modelCatalog
     data = model_catalog.get_attribute_options("cell_type")
     assert isinstance(data, dict)
@@ -154,14 +154,14 @@ def test_getValid_one(modelCatalog):
     assert len(data["cell_type"]) > 0
 
 #3.3) Multiple parameters
-def test_getValid_many(modelCatalog):
+def test_getModelValid_many(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(TypeError) as excinfo:
         data = model_catalog.get_attribute_options("cell_type", "brain_region")
     assert "takes at most 2 arguments" in str(excinfo.value) or "takes from 1 to 2 positional arguments" in str(excinfo.value)
 
 #3.4) Invalid parameter
-def test_getValid_invalid(modelCatalog):
+def test_getModelValid_invalid(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         data = model_catalog.get_attribute_options("abcde")
@@ -219,7 +219,6 @@ def test_addModel_valid_noalias_nodetails(modelCatalog):
     assert isinstance(uuid.UUID(model_id, version=4), uuid.UUID)
 
 #4.5) Valid model with alias; without instances and images
-# Note: using current timestamp as alias to ensure uniqueness
 def test_addModel_valid_withalias_nodetails(modelCatalog):
     model_catalog = modelCatalog
     model_name = "Model_{}_{}_py{}_add5".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), model_catalog.environment, platform.python_version())
@@ -331,9 +330,17 @@ def test_editModel_valid(modelCatalog):
 @pytest.mark.xfail # see https://github.com/HumanBrainProject/hbp-validation-framework/issues/241
 def test_editModel_invalid_duplicate_alias(modelCatalog):
     model_catalog = modelCatalog
-    model_name = "Model_{}_{}_py{}_edit3".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), model_catalog.environment, platform.python_version())
-    model_id = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name,
-                   alias=model_name, author="Validation Tester", organization="HBP-SP6",
+    model_name1 = "Model_{}_{}_py{}_edit3.1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), model_catalog.environment, platform.python_version())
+    model_id = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name1,
+                   alias=model_name1, author="Validation Tester", organization="HBP-SP6",
+                   private=False, cell_type="granule cell", model_scope="single cell",
+                   abstraction_level="spiking neurons",
+                   brain_region="basal ganglia", species="Mus musculus",
+                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
+                   description="This is a test entry! Please ignore.")
+    model_name2 = "Model_{}_{}_py{}_edit3.2".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), model_catalog.environment, platform.python_version())
+    model_id = model_catalog.register_model(app_id="359330", name="IGNORE - Test Model - " + model_name2,
+                   alias=model_name2, author="Validation Tester", organization="HBP-SP6",
                    private=False, cell_type="granule cell", model_scope="single cell",
                    abstraction_level="spiking neurons",
                    brain_region="basal ganglia", species="Mus musculus",
@@ -343,7 +350,7 @@ def test_editModel_invalid_duplicate_alias(modelCatalog):
     with pytest.raises(Exception) as excinfo:
         model_id = model_catalog.edit_model(model_id=model_id,
                        app_id="359330", name=model["name"] + "_changed",
-                       alias = model["alias"], author="Validation Tester", organization="HBP-SP6",
+                       alias = model_name1, author="Validation Tester", organization="HBP-SP6",
                        private=False, cell_type="granule cell", model_scope="single cell",
                        abstraction_level="spiking neurons",
                        brain_region="basal ganglia", species="Mus musculus",

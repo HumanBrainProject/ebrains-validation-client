@@ -6,7 +6,7 @@ import uuid
 """
 
 #1.1) With valid details
-def test_getImage_valid(modelCatalog, myModelID):
+def test_getModelImage_valid(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model = model_catalog.get_model(model_id=model_id)
@@ -14,21 +14,21 @@ def test_getImage_valid(modelCatalog, myModelID):
     assert model_image["id"] == model["images"][0]["id"]
 
 #1.2) With no image_id
-def test_getImage_no_id(modelCatalog):
+def test_getModelImage_no_id(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image = model_catalog.get_model_image()
     assert str(excinfo.value) == "image_id needs to be provided for finding a specific model image (figure)."
 
 #1.3) With invalid image_id format
-def test_getImage_invalid_id_format(modelCatalog):
+def test_getModelImage_invalid_id_format(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image = model_catalog.get_model_image(image_id="blahblah")
     assert "Error in retrieving model images (figures)." in str(excinfo.value)
 
 #1.4) With invalid image_id value
-def test_getImage_invalid_id_value(modelCatalog):
+def test_getModelImage_invalid_id_value(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image = model_catalog.get_model_image(image_id=str(uuid.uuid4()))
@@ -40,7 +40,7 @@ def test_getImage_invalid_id_value(modelCatalog):
 """
 
 #2.1) With valid details - model_id
-def test_listImages_valid_id(modelCatalog, myModelID):
+def test_listModelImages_valid_id(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model_images = model_catalog.list_model_images(model_id=model_id)
@@ -48,7 +48,7 @@ def test_listImages_valid_id(modelCatalog, myModelID):
     assert len(model_images) > 0
 
 #2.2) With valid details - alias
-def test_listImages_valid_alias(modelCatalog, myModelID):
+def test_listModelImages_valid_alias(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model = model_catalog.get_model(model_id=model_id)
@@ -57,21 +57,21 @@ def test_listImages_valid_alias(modelCatalog, myModelID):
     assert len(model_images) > 0
 
 #2.3) With no model_id or alias
-def test_listImages_no_id(modelCatalog):
+def test_listModelImages_no_id(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_images = model_catalog.list_model_images()
     assert str(excinfo.value) == "model_id or alias needs to be provided for finding model images."
 
 #2.4) With invalid model_id format
-def test_listImages_invalid_id_format(modelCatalog):
+def test_listModelImages_invalid_id_format(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_images = model_catalog.list_model_images(model_id="blahblah")
     assert "Error in retrieving model images (figures)." in str(excinfo.value)
 
 #2.5) With invalid model_id value
-def test_listImages_invalid_id_value(modelCatalog):
+def test_listModelImages_invalid_id_value(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_images = model_catalog.list_model_images(model_id=str(uuid.uuid4()))
@@ -79,7 +79,7 @@ def test_listImages_invalid_id_value(modelCatalog):
 
 #2.6) With invalid alias value
 @pytest.mark.xfail
-def test_listImages_invalid_id_value(modelCatalog):
+def test_listModelImages_invalid_id_value(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_images = model_catalog.list_model_images(alias=str(uuid.uuid4()))
@@ -90,7 +90,7 @@ def test_listImages_invalid_id_value(modelCatalog):
 """
 
 #3.1) With valid details
-def test_addImage_valid(modelCatalog, myModelID):
+def test_addModelImage_valid(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model_image_id = model_catalog.add_model_image(model_id=model_id,
@@ -99,7 +99,7 @@ def test_addImage_valid(modelCatalog, myModelID):
     assert isinstance(uuid.UUID(model_image_id, version=4), uuid.UUID)
 
 #3.2) With no model_id
-def test_addImage_no_id(modelCatalog):
+def test_addModelImage_no_id(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.add_model_image(url="http://www.neuron.yale.edu/neuron/sites/default/themes/xchameleon/logo.png",
@@ -107,7 +107,7 @@ def test_addImage_no_id(modelCatalog):
     assert str(excinfo.value) == "Model ID needs to be provided for finding the model."
 
 #3.3) With invalid model_id format
-def test_addImage_invalid_id_format(modelCatalog):
+def test_addModelImage_invalid_id_format(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.add_model_image(model_id="blahblah",
@@ -116,7 +116,7 @@ def test_addImage_invalid_id_format(modelCatalog):
     assert "Error in adding image (figure)." in str(excinfo.value)
 
 #3.4) With invalid model_id value
-def test_addImage_invalid_id_value(modelCatalog):
+def test_addModelImage_invalid_id_value(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.add_model_image(model_id=str(uuid.uuid4()),
@@ -125,7 +125,7 @@ def test_addImage_invalid_id_value(modelCatalog):
     assert "Error in adding image (figure)." in str(excinfo.value)
 
 #3.5) With missing info (url), but valid model_id
-def test_addImage_missing(modelCatalog, myModelID):
+def test_addModelImage_missing(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     with pytest.raises(Exception) as excinfo:
@@ -135,7 +135,7 @@ def test_addImage_missing(modelCatalog, myModelID):
 
 
 #3.6) With valid dauplicate data
-def test_addImage_valid_duplicate(modelCatalog, myModelID):
+def test_addModelImage_valid_duplicate(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model_image_id = model_catalog.add_model_image(model_id=model_id,
@@ -152,7 +152,7 @@ def test_addImage_valid_duplicate(modelCatalog, myModelID):
 """
 
 #4.1) With valid details
-def test_editImage_url_valid(modelCatalog, myModelID):
+def test_editModelImage_url_valid(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
     model = model_catalog.get_model(model_id=model_id)
@@ -165,7 +165,7 @@ def test_editImage_url_valid(modelCatalog, myModelID):
     assert model_image["caption"] == "New Caption 1"
 
 #4.2) With no image_id
-def test_editImage_no_id(modelCatalog):
+def test_editModelImage_no_id(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.edit_model_image(url="http://www.abcde.com/logo_2.png",
@@ -173,7 +173,7 @@ def test_editImage_no_id(modelCatalog):
     assert str(excinfo.value) == "Image ID needs to be provided for finding the image (figure)."
 
 #4.3) With invalid image_id format
-def test_editImage_invalid_id_format(modelCatalog):
+def test_editModelImage_invalid_id_format(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.edit_model_image(image_id="blahblah",
@@ -182,7 +182,7 @@ def test_editImage_invalid_id_format(modelCatalog):
     assert "Error in retrieving model images (figures)." in str(excinfo.value)
 
 #4.4) With invalid image_id value
-def test_editImage_invalid_id_value(modelCatalog):
+def test_editModelImage_invalid_id_value(modelCatalog):
     model_catalog = modelCatalog
     with pytest.raises(Exception) as excinfo:
         model_image_id = model_catalog.edit_model_image(image_id=str(uuid.uuid4()),

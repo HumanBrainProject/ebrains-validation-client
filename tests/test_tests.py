@@ -1,6 +1,8 @@
 import os
 import pytest
+import platform
 import uuid
+import sciunit
 from hbp_validation_framework import TestLibrary
 from datetime import datetime
 
@@ -120,14 +122,14 @@ def test_getList_nomatch(testLibrary):
 """
 
 #3.1) No parameters (all)
-def test_getValid_none(testLibrary):
+def test_getTestValid_none(testLibrary):
     test_library = testLibrary
     data = test_library.get_attribute_options()
     assert isinstance(data, dict)
     assert len(data.keys()) > 0
 
 #3.2) One parameter
-def test_getValid_one(testLibrary):
+def test_getTestValid_one(testLibrary):
     test_library = testLibrary
     data = test_library.get_attribute_options("cell_type")
     assert isinstance(data, dict)
@@ -137,14 +139,14 @@ def test_getValid_one(testLibrary):
     assert len(data["cell_type"]) > 0
 
 #3.3) Multiple parameters
-def test_getValid_many(testLibrary):
+def test_getTestValid_many(testLibrary):
     test_library = testLibrary
     with pytest.raises(TypeError) as excinfo:
         data = test_library.get_attribute_options("cell_type", "brain_region")
     assert "takes at most 2 arguments" in str(excinfo.value) or "takes from 1 to 2 positional arguments" in str(excinfo.value)
 
 #3.4) Invalid parameter
-def test_getValid_invalid(testLibrary):
+def test_getTestValid_invalid(testLibrary):
     test_library = testLibrary
     with pytest.raises(Exception) as excinfo:
         data = test_library.get_attribute_options("abcde")
@@ -158,20 +160,19 @@ def test_getValid_invalid(testLibrary):
 def test_addtest_none(testLibrary):
     test_library = testLibrary
     with pytest.raises(Exception) as excinfo:
-        test_id = test_library.register_test()
+        test_id = test_library.add_test()
 
 #4.2) Missing mandatory parameter (author)
 def test_addtest_missingParam(testLibrary):
     test_library = testLibrary
     with pytest.raises(Exception) as excinfo:
         test_name = "Test_{}_{}_py{}_add2".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-        test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                       alias=test_name, organization="HBP-SP6",
-                       private=False, cell_type="granule cell", test_scope="single cell",
-                       abstraction_level="spiking neurons",
-                       brain_region="basal ganglia", species="Mus musculus",
-                       owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                       description="This is a test entry! Please ignore.")
+        test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name,
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019",
+                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     assert "This field may not be blank." in str(excinfo.value)
 
 #4.3) Invalid value for parameter (brain_region)
@@ -179,84 +180,67 @@ def test_addtest_invalidParam(testLibrary):
     test_library = testLibrary
     with pytest.raises(Exception) as excinfo:
         test_name = "Test_{}_{}_py{}_add3".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-        test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                       alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                       private=False, cell_type="granule cell", test_scope="single cell",
-                       abstraction_level="spiking neurons",
-                       brain_region="ABCDE", species="Mus musculus",
-                       owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                       description="This is a test entry! Please ignore.")
+        test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="ABCDE", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019",
+                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     assert "brain_region = 'ABCDE' is invalid." in str(excinfo.value)
 
-#4.4) Valid test without alias; without instances and images
+#4.4) Valid test without alias
 def test_addtest_valid_noalias_nodetails(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_add4".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
-    assert isinstance(uuid.UUID(test_id, version=4), uuid.UUID)
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
 
-#4.5) Valid test with alias; without instances and images
-# Note: using current timestamp as alias to ensure uniqueness
+#4.5) Valid test with alias
 def test_addtest_valid_withalias_nodetails(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_add5".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     assert isinstance(uuid.UUID(test_id, version=4), uuid.UUID)
 
 #4.6) Invalid test with repeated alias; without instances and images
 def test_addtest_repeat_alias_nodetails(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_add6".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     with pytest.raises(Exception) as excinfo:
-        test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                       alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                       private=False, cell_type="granule cell", test_scope="single cell",
-                       abstraction_level="spiking neurons",
-                       brain_region="basal ganglia", species="Mus musculus",
-                       owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                       description="This is a test entry! Please ignore.")
-    assert "test with this alias already exists." in str(excinfo.value)
+        test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019",
+                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+    assert "validation test definition with this alias already exists." in str(excinfo.value)
 
-#4.7) Valid test with alias; with instances and images
-# Note: using current timestamp as alias to ensure uniqueness
+#4.7) Invalid test with no instances
 def test_addtest_valid_withalias_withdetails(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_add7".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.",
-                   instances=[{"source":"https://www.abcde.com",
-                               "version":"1.0", "parameters":""},
-                              {"source":"https://www.12345.com",
-                               "version":"2.0", "parameters":""}],
-                   images=[{"url":"http://www.neuron.yale.edu/neuron/sites/default/themes/xchameleon/logo.png",
-                            "caption":"NEURON Logo"},
-                           {"url":"https://collab.humanbrainproject.eu/assets/hbp_diamond_120.png",
-                            "caption":"HBP Logo"}])
-    assert isinstance(uuid.UUID(test, version=4), uuid.UUID)
+    with pytest.raises(Exception) as excinfo:
+        test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019")
+    assert "Error in adding test." in str(excinfo.value)
 
 
 """
@@ -267,69 +251,101 @@ def test_addtest_valid_withalias_withdetails(testLibrary):
 def test_editTest_invalid_noID(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_edit1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     test = test_library.get_test_definition(test_id=test_id)
     with pytest.raises(Exception) as excinfo:
-        test_id = test_library.edit_test(
-                       app_id="359330", name=test["name"] + "_changed",
-                       alias = test["alias"] + "_changed",
-                       author="Validation Tester", organization="HBP-SP6",
-                       private=False, cell_type="granule cell", test_scope="single cell",
-                       abstraction_level="spiking neurons",
-                       brain_region="basal ganglia", species="Mus musculus",
-                       owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                       description="This is a test entry! Please ignore.")
-    assert str(excinfo.value) == "test ID needs to be provided for editing a test."
+        test_id = test_library.edit_test(name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019")
+    assert str(excinfo.value) == "Test ID needs to be provided for editing a test."
 
 #5.2) Valid change - test_id
-@pytest.mark.xfail # see https://github.com/HumanBrainProject/hbp-validation-framework/issues/241
+# @pytest.mark.xfail # see https://github.com/HumanBrainProject/hbp-validation-framework/issues/241
 def test_editTest_valid(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_edit2".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     test = test_library.get_test_definition(test_id=test_id)
-    test_id = test_library.edit_test(test_id=test_id,
-                   app_id="359330", name=test["name"] + "_changed",
-                   alias = test["alias"] + "_changed", author="Validation Tester", organization="HBP-SP4",
-                   private=False, cell_type="pyramidal cell", test_scope="network: whole brain",
-                   abstraction_level="systems biology",
-                   brain_region="hippocampus", species="Rattus norvegicus",
-                   owner="Validation Tester", project="HBP SP 6.4", license="BSD 2-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_id = test_library.edit_test(test_id=test_id, name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019")
     assert isinstance(uuid.UUID(test_id, version=4), uuid.UUID)
 
 #5.3) Invalid change - duplicate alias
-@pytest.mark.xfail # see https://github.com/HumanBrainProject/hbp-validation-framework/issues/241
 def test_editTest_invalid_duplicate_alias(testLibrary):
     test_library = testLibrary
-    test_name = "Test_{}_{}_py{}_edit3".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
-    test_id = test_library.register_test(app_id="359330", name="IGNORE - Test test - " + test_name,
-                   alias=test_name, author="Validation Tester", organization="HBP-SP6",
-                   private=False, cell_type="granule cell", test_scope="single cell",
-                   abstraction_level="spiking neurons",
-                   brain_region="basal ganglia", species="Mus musculus",
-                   owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                   description="This is a test entry! Please ignore.")
+    test_name1 = "Test_{}_{}_py{}_edit3.1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name1, alias=test_name1, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+    test_name2 = "Test_{}_{}_py{}_edit3.1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name2, alias=test_name2, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
     test = test_library.get_test_definition(test_id=test_id)
     with pytest.raises(Exception) as excinfo:
-        test_id = test_library.edit_test(test_id=test_id,
-                       app_id="359330", name=test["name"] + "_changed",
-                       alias = test["alias"], author="Validation Tester", organization="HBP-SP6",
-                       private=False, cell_type="granule cell", test_scope="single cell",
-                       abstraction_level="spiking neurons",
-                       brain_region="basal ganglia", species="Mus musculus",
-                       owner="Validation Tester", project="SP 6.4", license="BSD 3-Clause",
-                       description="This is a test entry! Please ignore.")
-    assert "scientific test with this alias already exists" in str(excinfo.value)
+        test_id = test_library.edit_test(test_id=test_id, name=test["name"] + "_changed", alias=test_name1, author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019")
+    assert "validation test definition with this alias already exists" in str(excinfo.value)
+
+#5.4) Invalid change - version info
+def test_editTest_invalid_version_info(testLibrary):
+    test_library = testLibrary
+    test_name = "Test_{}_{}_py{}_edit4".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+    test = test_library.get_test_definition(test_id=test_id)
+    with pytest.raises(Exception) as excinfo:
+        test_id = test_library.edit_test(test_id=test_id, name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
+                        species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                        data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                        data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                        data_type="Mean, SD", publication="Testing et al., 2019",
+                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+    assert "got an unexpected keyword argument 'version'" in str(excinfo.value)
+
+
+"""
+6. Get 'sciunit' validation test instance
+"""
+
+#6.1) With valid details - test_id
+def test_getValidationTest_testID(testLibrary):
+    test_library = testLibrary
+    test_name = "Test_{}_{}_py{}_getValTest_1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
+    test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
+                    species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
+                    data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
+                    data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
+                    data_type="Mean, SD", publication="Testing et al., 2019",
+                    version="1.0", repository="https://github.com/appukuttan-shailesh/eFELunit.git", path="eFELunit.tests.MultipleCurrentStepTest")
+    test = test_library.get_validation_test(test_id=test_id, protocol="abcde")
+    assert isinstance(test, sciunit.Test)
+    assert "test.txt" in test.observation
