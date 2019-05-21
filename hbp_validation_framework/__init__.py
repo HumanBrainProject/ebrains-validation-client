@@ -1234,10 +1234,11 @@ class TestLibrary(BaseClient):
         >>> result = test_library.get_result(result_id="901ac0f3-2557-4ae3-bb2b-37617312da09", order="test")
         """
 
+        valid_orders = ["test", "model", "test_code", "model_instance", "score_type", ""]
         if not result_id:
             raise Exception("result_id needs to be provided for finding a specific result.")
-        elif order not in ["test", "model", ""]:
-            raise Exception("order needs to be specified as 'test', 'model' or ''.")
+        elif order not in valid_orders:
+            raise Exception("order needs to be specified from: {}".format(valid_orders))
         else:
             url = self.url + "/results/?id=" + result_id + "&order=" + order + "&format=json"
         result_json = requests.get(url, auth=self.auth, verify=self.verify)
@@ -1275,8 +1276,9 @@ class TestLibrary(BaseClient):
         >>> results = test_library.list_results(model_version_id="f32776c7-658f-462f-a944-1daf8765ec97", order="test")
         """
 
-        if order not in ["test", "model", ""]:
-            raise Exception("order needs to be specified as 'test', 'model' or ''.")
+        valid_orders = ["test", "model", "test_code", "model_instance", "score_type", ""]
+        if order not in valid_orders:
+            raise Exception("order needs to be specified from: {}".format(valid_orders))
         else:
             params = locals()["filters"]
             url = self.url + "/results/?" + "order=" + order + "&" + urlencode(params) + "&format=json"

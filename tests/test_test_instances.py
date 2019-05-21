@@ -110,7 +110,7 @@ def test_addTestInstance_no_id(testLibrary):
                                                         path="ModuleName.Tests.TestName",
                                                         parameters="",
                                                         description="")
-    assert str(excinfo.value) == "test_id needs to be provided for finding the model."
+    assert str(excinfo.value) == "test_id needs to be provided for finding the test."
 
 #3.3) With invalid test_id format
 def test_addTestInstance_invalid_id_format(testLibrary):
