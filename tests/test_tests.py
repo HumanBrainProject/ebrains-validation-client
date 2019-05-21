@@ -337,7 +337,6 @@ def test_editTest_invalid_version_info(testLibrary):
 """
 
 #6.1) With valid details - test_id
-@pytest.mark.skip
 def test_getValidationTest_testID(testLibrary):
     test_library = testLibrary
     test_name = "Test_{}_{}_py{}_getValTest_1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
