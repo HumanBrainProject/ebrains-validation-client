@@ -102,16 +102,16 @@ def myResultID(modelCatalog, testLibrary, myModelID, myTestID):
 
    result_id = test_library.register_result(score, data_store=collab_storage, project = "52468") # Collab ID = 52468
    return result_id
-#
-# def pytest_sessionfinish(session, exitstatus):
-#    ENVIRONMENT = session.config.getoption("--environment")
-#    model_catalog = ModelCatalog(username=HBP_USERNAME, password=HBP_PASSWORD, environment=ENVIRONMENT)
-#    models = model_catalog.list_models(app_id="359330", author="Validation Tester")
-#    for model in models:
-#       if "IGNORE - Test Model - " in model["name"]:
-#          model_catalog.delete_model(model["id"])
-#    test_library = TestLibrary.from_existing(model_catalog)
-#    tests = test_library.list_tests(author="Validation Tester")
-#    for test in tests:
-#       if "IGNORE - Test Test - " in test["name"]:
-#          test_library.delete_test(test["id"])
+
+def pytest_sessionfinish(session, exitstatus):
+   ENVIRONMENT = session.config.getoption("--environment")
+   model_catalog = ModelCatalog(username=HBP_USERNAME, password=HBP_PASSWORD, environment=ENVIRONMENT)
+   models = model_catalog.list_models(app_id="359330", author="Validation Tester")
+   for model in models:
+      if "IGNORE - Test Model - " in model["name"]:
+         model_catalog.delete_model(model["id"])
+   test_library = TestLibrary.from_existing(model_catalog)
+   tests = test_library.list_tests(author="Validation Tester")
+   for test in tests:
+      if "IGNORE - Test Test - " in test["name"]:
+         test_library.delete_test(test["id"])

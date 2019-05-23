@@ -63,7 +63,7 @@ def test_get_result_valid_order_default(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id)
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "results"
+    assert list(result.keys())[0] == "results"
 
 #2.2) With valid details - order = test
 def test_get_result_valid_order_test(testLibrary, myResultID):
@@ -72,7 +72,7 @@ def test_get_result_valid_order_test(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id, order="test")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "tests"
+    assert list(result.keys())[0] == "tests"
 
 #2.3) With valid details - order = model
 def test_get_result_valid_order_model(testLibrary, myResultID):
@@ -81,7 +81,7 @@ def test_get_result_valid_order_model(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id, order="model")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "models"
+    assert list(result.keys())[0] == "models"
 
 #2.4) With valid details - order = test_code
 def test_get_result_valid_order_test_code(testLibrary, myResultID):
@@ -90,7 +90,7 @@ def test_get_result_valid_order_test_code(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id, order="test_code")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "test_codes"
+    assert list(result.keys())[0] == "test_codes"
 
 #2.5) With valid details - order = model_instance
 def test_get_result_valid_order_model_instance(testLibrary, myResultID):
@@ -99,7 +99,7 @@ def test_get_result_valid_order_model_instance(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id, order="model_instance")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "model_instances"
+    assert list(result.keys())[0] == "model_instances"
 
 #2.6) With valid details - order = score_type
 def test_get_result_valid_order_score_type(testLibrary, myResultID):
@@ -108,7 +108,7 @@ def test_get_result_valid_order_score_type(testLibrary, myResultID):
     result = test_library.get_result(result_id=result_id, order="score_type")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "score_type"
+    assert list(result.keys())[0] == "score_type"
 
 #2.7) With invalid order
 def test_get_result_invalid_order(testLibrary, myResultID):
@@ -130,7 +130,7 @@ def test_list_results_valid_order_default(testLibrary, myTestID, myResultID):
     result = test_library.list_results(test_id=test_id)
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "results"
+    assert list(result.keys())[0] == "results"
 
 #3.2) With valid details - order = test
 def test_list_results_valid_order_test(testLibrary, myTestID, myResultID):
@@ -139,7 +139,7 @@ def test_list_results_valid_order_test(testLibrary, myTestID, myResultID):
     result = test_library.list_results(test_id=test_id, order="test")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "tests"
+    assert list(result.keys())[0] == "tests"
 
 #3.3) With valid details - order = model
 def test_list_results_valid_order_model(testLibrary, myTestID, myResultID):
@@ -148,7 +148,7 @@ def test_list_results_valid_order_model(testLibrary, myTestID, myResultID):
     result = test_library.list_results(test_id=test_id, order="model")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "models"
+    assert list(result.keys())[0] == "models"
 
 #3.4) With valid details - order = test_code
 def test_list_results_valid_order_test_code(testLibrary, myTestID, myResultID):
@@ -157,7 +157,7 @@ def test_list_results_valid_order_test_code(testLibrary, myTestID, myResultID):
     result = test_library.list_results(test_id=test_id, order="test_code")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "test_codes"
+    assert list(result.keys())[0] == "test_codes"
 
 #3.5) With valid details - order = model_instance
 def test_list_results_valid_order_model_instance(testLibrary, myTestID, myResultID):
@@ -166,7 +166,7 @@ def test_list_results_valid_order_model_instance(testLibrary, myTestID, myResult
     result = test_library.list_results(test_id=test_id, order="model_instance")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "model_instances"
+    assert list(result.keys())[0] == "model_instances"
 
 #3.6) With valid details - order = score_type
 def test_list_results_valid_order_score_type(testLibrary, myTestID, myResultID):
@@ -175,7 +175,7 @@ def test_list_results_valid_order_score_type(testLibrary, myTestID, myResultID):
     result = test_library.list_results(test_id=test_id, order="score_type")
     assert isinstance(result, dict)
     assert len(result.keys()) == 1
-    assert result.keys()[0] == "score_type"
+    assert list(result.keys())[0] == "score_type"
 
 #3.7) With invalid order
 def test_list_results_invalid_order(testLibrary, myTestID, myResultID):
