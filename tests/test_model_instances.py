@@ -1,6 +1,7 @@
 import os
 import pytest
 import uuid
+from hbp_validation_framework import sample
 
 """
 1. Get an instance of a model
@@ -346,11 +347,8 @@ def test_downloadModelInstance_valid_alias_version(modelCatalog, myModelID):
 def test_findCreateModelInstance_valid_exist_instance_id(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
-    class testModel:
-        def __init__(self, model_instance_uuid=""):
-            self.model_instance_uuid = model_instance_uuid
     model = model_catalog.get_model(model_id=model_id)
-    test_model = testModel(model_instance_uuid=model["instances"][0]["id"])
+    test_model = sample.SampleModel(model_instance_uuid=model["instances"][0]["id"])
     model_instance_id = model_catalog.find_model_instance_else_add(test_model)
     assert isinstance(uuid.UUID(model_instance_id, version=4), uuid.UUID)
 
@@ -358,23 +356,15 @@ def test_findCreateModelInstance_valid_exist_instance_id(modelCatalog, myModelID
 def test_findCreateModelInstance_valid_exist_modelID_version(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
-    class testModel:
-        def __init__(self, model_uuid="", model_version=""):
-            self.model_uuid = model_uuid
-            self.model_version = model_version
     model = model_catalog.get_model(model_id=model_id)
-    test_model = testModel(model_uuid=model_id, model_version=model["instances"][0]["version"])
+    test_model = sample.SampleModel(model_uuid=model_id, model_version=model["instances"][0]["version"])
     model_instance_id = model_catalog.find_model_instance_else_add(test_model)
     assert isinstance(uuid.UUID(model_instance_id, version=4), uuid.UUID)
 
 def test_findCreateModelInstance_valid_create(modelCatalog, myModelID):
     model_catalog = modelCatalog
     model_id = myModelID
-    class testModel:
-        def __init__(self, model_uuid="", model_version=""):
-            self.model_uuid = model_uuid
-            self.model_version = model_version
     model = model_catalog.get_model(model_id=model_id)
-    test_model = testModel(model_uuid=model_id, model_version=model["instances"][0]["version"]+"_new")
+    test_model = sample.SampleModel(model_uuid=model_id, model_version=model["instances"][0]["version"]+"_new")
     model_instance_id = model_catalog.find_model_instance_else_add(test_model)
     assert isinstance(uuid.UUID(model_instance_id, version=4), uuid.UUID)

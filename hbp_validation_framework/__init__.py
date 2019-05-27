@@ -823,8 +823,8 @@ class TestLibrary(BaseClient):
 
         Examples
         --------
-        >>> test = test_library.delete_test(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
-        >>> test = test_library.delete_test(alias="B1")
+        >>> test_library.delete_test(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test_library.delete_test(alias="B1")
         """
 
         if test_id == "" and alias == "":
@@ -1133,8 +1133,8 @@ class TestLibrary(BaseClient):
 
         Examples
         --------
-        >>> test = test_library.delete_model_instance(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
-        >>> test = test_library.delete_model_instance(alias="B1", version="1.0")
+        >>> test_library.delete_model_instance(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test_library.delete_model_instance(alias="B1", version="1.0")
         """
 
         if instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
@@ -1363,6 +1363,36 @@ class TestLibrary(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception(response.content)
+
+    def delete_result(self, result_id=""):
+        """ONLY FOR SUPERUSERS: Delete a result on the validation framework.
+
+        This allows to delete an existing result info on the validation framework.
+        The `result_id` needs to be specified as input parameter.
+
+        Parameters
+        ----------
+        result_id : UUID
+            System generated unique identifier associated with result.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_catalog.delete_result(result_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
+        """
+
+        if not result_id:
+            raise Exception("result_id needs to be provided for finding a specific result.")
+        else:
+            url = self.url + "/results/?id=" + result_id + "&format=json"
+        model_image_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_image_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_image_json))
+        elif model_image_json.status_code != 200:
+            raise Exception("Error in deleting result. Response = " + str(model_image_json))
 
     def _get_platform(self):
         """
@@ -1881,8 +1911,8 @@ class ModelCatalog(BaseClient):
 
         Examples
         --------
-        >>> model = model_catalog.delete_model(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
-        >>> model = model_catalog.delete_model(alias="B1")
+        >>> model_catalog.delete_model(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model_catalog.delete_model(alias="B1")
         """
 
         if model_id == "" and alias == "":
@@ -2233,7 +2263,7 @@ class ModelCatalog(BaseClient):
         >>> instance_id = model_catalog.find_model_instance_else_add(model)
         """
 
-        if not hasattr(model_obj, "model_instance_uuid"):
+        if not getattr(model_obj, "model_instance_uuid", None):
             # check that the model is registered with the model registry.
             if not hasattr(model_obj, "model_uuid"):
                 raise AttributeError("Model object does not have a 'model_uuid' attribute. "
@@ -2373,8 +2403,8 @@ class ModelCatalog(BaseClient):
 
         Examples
         --------
-        >>> model = model_catalog.delete_model_instance(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
-        >>> model = model_catalog.delete_model_instance(alias="B1", version="1.0")
+        >>> model_catalog.delete_model_instance(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model_catalog.delete_model_instance(alias="B1", version="1.0")
         """
 
         if instance_id == "" and (model_id == "" or not version) and (alias == "" or not version):
@@ -2594,7 +2624,7 @@ class ModelCatalog(BaseClient):
 
         Examples
         --------
-        >>> model_image = model_catalog.delete_model_image(image_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
+        >>> model_catalog.delete_model_image(image_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
         """
 
         if not image_id:

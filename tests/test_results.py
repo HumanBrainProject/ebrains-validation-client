@@ -1,9 +1,7 @@
-import os
 import pytest
 import platform
 import uuid
-from sciunit import Score
-from hbp_validation_framework import TestLibrary
+from hbp_validation_framework import sample
 from hbp_validation_framework.datastores import CollabDataStore
 from datetime import datetime
 
@@ -19,13 +17,8 @@ def test_register_result_valid(modelCatalog, testLibrary, myModelID, myTestID):
     test_library = testLibrary
     test_id = myTestID
 
-    class testModel:
-        def __init__(self, model_uuid="", model_version=""):
-            self.name = "Test Model"
-            self.model_uuid = model_uuid
-            self.model_version = model_version
     model = model_catalog.get_model(model_id=model_id)
-    model = testModel(model_uuid=model_id, model_version=model["instances"][0]["version"])
+    model = sample.SampleModel(model_uuid=model_id, model_version=model["instances"][0]["version"])
 
     test_name = "Test_{}_{}_py{}_getValTest_1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
     test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
@@ -33,22 +26,15 @@ def test_register_result_valid(modelCatalog, testLibrary, myModelID, myTestID):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="https://github.com/appukuttan-shailesh/eFELunit.git", path="eFELunit.tests.MultipleCurrentStepTest")
-    test = test_library.get_validation_test(test_id=test_id, protocol="abcde")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
+    test = test_library.get_validation_test(test_id=test_id)
 
-    class testScore(Score):
-        def __init__(self, model, test):
-            self.model = model
-            self.test = test
-            self.related_data = {}
-            self.score = 1.0
-    score = testScore(model, test)
+    score = test.judge(model)
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     folder_name = "results_{}_{}_{}".format(model.name, model.model_uuid[:8], timestamp)
-    collab_storage = CollabDataStore(base_folder=folder_name)
 
-    result_id = test_library.register_result(score, data_store=collab_storage, project = "52468") # Collab ID = 52468
+    result_id = test_library.register_result(score, project = "52468") # Collab ID = 52468
     assert isinstance(uuid.UUID(result_id, version=4), uuid.UUID)
 
 

@@ -1,9 +1,7 @@
-import os
 import pytest
 import platform
 import uuid
 import sciunit
-from hbp_validation_framework import TestLibrary
 from datetime import datetime
 
 """
@@ -172,7 +170,7 @@ def test_addtest_missingParam(testLibrary):
                         data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                         data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                         data_type="Mean, SD", publication="Testing et al., 2019",
-                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                        version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     assert "This field may not be blank." in str(excinfo.value)
 
 #4.3) Invalid value for parameter (brain_region)
@@ -185,7 +183,7 @@ def test_addtest_invalidParam(testLibrary):
                         data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                         data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                         data_type="Mean, SD", publication="Testing et al., 2019",
-                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                        version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     assert "brain_region = 'ABCDE' is invalid." in str(excinfo.value)
 
 #4.4) Valid test without alias
@@ -197,7 +195,7 @@ def test_addtest_valid_noalias_nodetails(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
 
 #4.5) Valid test with alias
 def test_addtest_valid_withalias_nodetails(testLibrary):
@@ -208,7 +206,7 @@ def test_addtest_valid_withalias_nodetails(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     assert isinstance(uuid.UUID(test_id, version=4), uuid.UUID)
 
 #4.6) Invalid test with repeated alias; without instances and images
@@ -220,14 +218,14 @@ def test_addtest_repeat_alias_nodetails(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     with pytest.raises(Exception) as excinfo:
         test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name, alias=test_name, author="Validation Tester",
                         species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
                         data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                         data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                         data_type="Mean, SD", publication="Testing et al., 2019",
-                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                        version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     assert "validation test definition with this alias already exists." in str(excinfo.value)
 
 #4.7) Invalid test with no instances
@@ -256,7 +254,7 @@ def test_editTest_invalid_noID(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     test = test_library.get_test_definition(test_id=test_id)
     with pytest.raises(Exception) as excinfo:
         test_id = test_library.edit_test(name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
@@ -276,7 +274,7 @@ def test_editTest_valid(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     test = test_library.get_test_definition(test_id=test_id)
     test_id = test_library.edit_test(test_id=test_id, name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
                     species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
@@ -294,14 +292,14 @@ def test_editTest_invalid_duplicate_alias(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
-    test_name2 = "Test_{}_{}_py{}_edit3.1".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
+    test_name2 = "Test_{}_{}_py{}_edit3.2".format(datetime.now().strftime("%Y-%m-%d_%H:%M:%S"), test_library.environment, platform.python_version())
     test_id = test_library.add_test(name="IGNORE - Test Test - " + test_name2, alias=test_name2, author="Validation Tester",
                     species="Mus musculus", age="", brain_region="basal ganglia", cell_type="granule cell",
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     test = test_library.get_test_definition(test_id=test_id)
     with pytest.raises(Exception) as excinfo:
         test_id = test_library.edit_test(test_id=test_id, name=test["name"] + "_changed", alias=test_name1, author="Validation Tester",
@@ -320,7 +318,7 @@ def test_editTest_invalid_version_info(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     test = test_library.get_test_definition(test_id=test_id)
     with pytest.raises(Exception) as excinfo:
         test_id = test_library.edit_test(test_id=test_id, name="IGNORE - Test Test - " + test_name, alias=test["alias"] + "_changed", author="Validation Tester",
@@ -328,7 +326,7 @@ def test_editTest_invalid_version_info(testLibrary):
                         data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                         data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                         data_type="Mean, SD", publication="Testing et al., 2019",
-                        version="1.0", repository="http://www.abcde.com", path="ModuleName.Tests.TestName")
+                        version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
     assert "got an unexpected keyword argument 'version'" in str(excinfo.value)
 
 
@@ -345,7 +343,7 @@ def test_getValidationTest_testID(testLibrary):
                     data_modality="electron microscopy", test_type="network structure", score_type="Other", protocol="Later",
                     data_location="https://object.cscs.ch/v1/AUTH_c0a333ecf7c045809321ce9d9ecdfdea/sp6_validation_data/test.txt",
                     data_type="Mean, SD", publication="Testing et al., 2019",
-                    version="1.0", repository="https://github.com/appukuttan-shailesh/eFELunit.git", path="eFELunit.tests.MultipleCurrentStepTest")
-    test = test_library.get_validation_test(test_id=test_id, protocol="abcde")
+                    version="1.0", repository="https://github.com/HumanBrainProject/hbp-validation-client.git", path="hbp_validation_framework.sample.SampleTest")
+    test = test_library.get_validation_test(test_id=test_id)
     assert isinstance(test, sciunit.Test)
     assert "test.txt" in test.observation

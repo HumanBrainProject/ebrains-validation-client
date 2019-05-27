@@ -1,4 +1,3 @@
-import os
 import pytest
 import uuid
 
@@ -96,7 +95,7 @@ def test_addTestInstance_valid(testLibrary, myTestID):
     test_id = myTestID
     test_instance = test_library.add_test_instance(test_id=test_id, version="3.0",
                                                     repository="http://www.12345.com",
-                                                    path="ModuleName.Tests.TestName",
+                                                    path="hbp_validation_framework.sample.SampleTest",
                                                     parameters="",
                                                     description="")
     assert isinstance(uuid.UUID(test_instance, version=4), uuid.UUID)
@@ -107,7 +106,7 @@ def test_addTestInstance_no_id(testLibrary):
     with pytest.raises(Exception) as excinfo:
         test_instance = test_library.add_test_instance(version="4.0",
                                                         repository="http://www.12345.com",
-                                                        path="ModuleName.Tests.TestName",
+                                                        path="hbp_validation_framework.sample.SampleTest",
                                                         parameters="",
                                                         description="")
     assert str(excinfo.value) == "test_id needs to be provided for finding the test."
@@ -118,7 +117,7 @@ def test_addTestInstance_invalid_id_format(testLibrary):
     with pytest.raises(Exception) as excinfo:
         test_instance = test_library.add_test_instance(test_id="abcde", version="5.0",
                                                         repository="http://www.12345.com",
-                                                        path="ModuleName.Tests.TestName",
+                                                        path="hbp_validation_framework.sample.SampleTest",
                                                         parameters="",
                                                         description="")
     assert "Error in adding test instance." in str(excinfo.value)
@@ -129,7 +128,7 @@ def test_addTestInstance_invalid_id_value(testLibrary):
     with pytest.raises(Exception) as excinfo:
         test_instance = test_library.add_test_instance(test_id=str(uuid.uuid4()), version="6.0",
                                                         repository="http://www.12345.com",
-                                                        path="ModuleName.Tests.TestName",
+                                                        path="hbp_validation_framework.sample.SampleTest",
                                                         parameters="",
                                                         description="")
     assert "Error in adding test instance." in str(excinfo.value)
@@ -140,13 +139,13 @@ def test_addTestInstance_duplicate_version(testLibrary, myTestID):
     test_id = myTestID
     test_instance = test_library.add_test_instance(test_id=test_id, version="7.0",
                                                     repository="http://www.12345.com",
-                                                    path="ModuleName.Tests.TestName",
+                                                    path="hbp_validation_framework.sample.SampleTest",
                                                     parameters="",
                                                     description="")
     with pytest.raises(Exception) as excinfo:
         test_instance = test_library.add_test_instance(test_id=test_id, version="7.0",
                                                     repository="http://www.12345.com",
-                                                    path="ModuleName.Tests.TestName",
+                                                    path="hbp_validation_framework.sample.SampleTest",
                                                     parameters="",
                                                     description="")
     assert "Error in adding test instance." in str(excinfo.value)
@@ -253,7 +252,7 @@ def test_editTestInstance_valid_change_version(testLibrary, myTestID):
     test_id = myTestID
     test_instance_id = test_library.add_test_instance(test_id=test_id, version="1.0_edit",
                                                     repository="http://www.12345.com",
-                                                    path="ModuleName.Tests.TestName",
+                                                    path="hbp_validation_framework.sample.SampleTest",
                                                     parameters="",
                                                     description="")
     test_instance_id = test_library.edit_test_instance(instance_id=test_instance_id,
