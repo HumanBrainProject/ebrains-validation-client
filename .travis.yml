@@ -1,0 +1,15 @@
+language: python
+dist: trusty
+sudo: required
+matrix:
+    include:
+        - python: 2.7
+          env: PYENV=py27
+        - python: 3.6
+          env: PYENV=py36
+install:
+  - source tests/install.sh
+script:
+  - pytest --disable-pytest-warnings --cov=hbp_validation_framework tests/ --environment="production"
+after_success:
+  - coveralls

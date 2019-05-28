@@ -287,13 +287,9 @@ class BaseClient(object):
                                                verify=self.verify,
                                                headers=headers)
                     # check good communication
-                    #print "rNMPI2.status_code = ", rNMPI2.status_code
-                    #print "content = ", rNMPI2.content
                     if rNMPI2.status_code == requests.codes.ok:
-                        #import pdb; pdb.set_trace()
                         # check success address
                         if rNMPI2.url == self.url + '/config.json':
-                            # print rNMPI2.text
                             res = rNMPI2.json()
                             self.token = res['auth']['token']['access_token']
                             self.config = res
@@ -549,7 +545,6 @@ class TestLibrary(BaseClient):
 
         * name
         * alias
-        * version
         * author
         * species
         * age
@@ -579,6 +574,12 @@ class TestLibrary(BaseClient):
         >>> tests = test_library.list_tests(test_type="single cell activity")
         >>> tests = test_library.list_tests(test_type="single cell activity", cell_type="Pyramidal Cell")
         """
+
+        valid_filters = ["name", "alias", "author", "species", "age", "brain_region", "cell_type", "data_modality", "test_type", "score_type", "model_scope", "abstraction_level", "data_type", "publication"]
+        params = locals()["filters"]
+        for filter in params:
+            if filter not in valid_filters:
+                raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
 
         params = locals()["filters"]
         url = self.url + "/tests/?"+urlencode(params)+"&format=json"
@@ -796,6 +797,45 @@ class TestLibrary(BaseClient):
         else:
             raise Exception("Error in editing test. Response = " + str(response.json()))
 
+    def delete_test(self, test_id="", alias=""):
+        """ONLY FOR SUPERUSERS: Delete a specific test definition by its test_id or alias.
+
+        A specific test definition can be deleted from the test library, along with all
+        associated test instances, in the following ways (in order of priority):
+
+        1. specify the `test_id`
+        2. specify the `alias` (of the test)
+
+        Parameters
+        ----------
+        test_id : UUID
+            System generated unique identifier associated with test definition.
+        alias : string
+            User-assigned unique identifier associated with test definition.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> test_library.delete_test(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test_library.delete_test(alias="B1")
+        """
+
+        if test_id == "" and alias == "":
+            raise Exception("test ID or alias needs to be provided for deleting a test.")
+        elif test_id != "":
+            url = self.url + "/tests/?id=" + test_id + "&format=json"
+        else:
+            url = self.url + "/tests/?alias=" + alias + "&format=json"
+
+        test_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if test_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(test_json))
+        elif test_json.status_code != 200:
+            raise Exception("Error in deleting test. Response = " + str(test_json))
+
     def get_test_instance(self, instance_path="", instance_id="", test_id="", alias="", version=""):
         """Retrieve a specific test instance definition from the test library.
 
@@ -911,7 +951,7 @@ class TestLibrary(BaseClient):
         test_instances_json = test_instances_json.json()
         return test_instances_json["test_codes"]
 
-    def add_test_instance(self, test_id="", alias="", repository="", path="", version=""):
+    def add_test_instance(self, test_id="", alias="", repository="", path="", version="", description="", parameters=""):
         """Register a new test instance.
 
         This allows to add a new instance to an existing test in the test library.
@@ -929,6 +969,10 @@ class TestLibrary(BaseClient):
             Python path (not filesystem path) to test source code within Python package.
         version : string
             User-assigned identifier (unique for each test) associated with test instance.
+        description : string, optional
+            Text describing this specific test instance.
+        parameters : string, optional
+            Any additional parameters to be submitted to test, or used by it, at runtime.
 
         Returns
         -------
@@ -948,15 +992,14 @@ class TestLibrary(BaseClient):
                                         version="3.0")
         """
 
-        if test_id:
-            test_definition_id = test_id    # as needed by API
+        test_definition_id = test_id    # as needed by API
         instance_data = locals()
         for key in ["self", "test_id"]:
             instance_data.pop(key)
 
         if test_definition_id == "" and alias == "":
-            raise Exception("test_id needs to be provided for finding the model.")
-            #raise Exception("test_id or alias needs to be provided for finding the model.")
+            raise Exception("test_id needs to be provided for finding the test.")
+            #raise Exception("test_id or alias needs to be provided for finding the test.")
         elif test_definition_id != "":
             url = self.url + "/test-instances/?format=json"
         else:
@@ -971,7 +1014,7 @@ class TestLibrary(BaseClient):
         else:
             raise Exception("Error in adding test instance. Response = " + str(response))
 
-    def edit_test_instance(self, instance_id="", test_id="", alias="", repository=None, path=None, version=None):
+    def edit_test_instance(self, instance_id="", test_id="", alias="", repository=None, path=None, version=None, description=None, parameters=None):
         """Edit an existing test instance.
 
         This allows to edit an instance of an existing test in the test library.
@@ -1000,6 +1043,10 @@ class TestLibrary(BaseClient):
             Python path (not filesystem path) to test source code within Python package.
         version : string
             User-assigned identifier (unique for each test) associated with test instance.
+        description : string, optional
+            Text describing this specific test instance.
+        parameters : string, optional
+            Any additional parameters to be submitted to test, or used by it, at runtime.
 
         Returns
         -------
@@ -1014,15 +1061,16 @@ class TestLibrary(BaseClient):
                                         version="4.0")
         """
 
-        if instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
+        if instance_id == "" and (test_id == "" or not version) and (alias == "" or not version):
             raise Exception("instance_id or (test_id, version) or (alias, version) needs to be provided for finding a test instance.")
 
         if instance_id:
-            id = instance_id    # as needed by API
+            id = instance_id                # as needed by API
         if test_id:
             test_definition_id = test_id    # as needed by API
         if alias:
-            test_alias = alias  # as needed by API
+            test_alias = alias              # as needed by API
+
         instance_data = locals()
         for key in ["self", "test_id", "alias"]:
             instance_data.pop(key)
@@ -1053,6 +1101,59 @@ class TestLibrary(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception("Error in editing test instance. Response = " + str(response.content))
+
+    def delete_test_instance(self, instance_id="", test_id="", alias="", version=""):
+        """ONLY FOR SUPERUSERS: Delete an existing test instance.
+
+        This allows to delete an instance of an existing test in the test library.
+        The test instance can be specified in the following ways (in order of priority):
+
+        1. specify `instance_id` corresponding to test instance in test library
+        2. specify `test_id` and `version`
+        3. specify `alias` (of the test) and `version`
+
+        Parameters
+        ----------
+        instance_id : UUID
+            System generated unique identifier associated with test instance.
+        test_id : UUID
+            System generated unique identifier associated with test definition.
+        alias : string
+            User-assigned unique identifier associated with test definition.
+        version : string
+            User-assigned unique identifier associated with test instance.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> test_library.delete_model_instance(test_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> test_library.delete_model_instance(alias="B1", version="1.0")
+        """
+
+        if instance_id == "" and (test_id == "" or version == "") and (alias == "" or version == ""):
+            raise Exception("instance_id or (test_id, version) or (alias, version) needs to be provided for finding a test instance.")
+
+        if instance_id:
+            id = instance_id    # as needed by API
+        if test_id:
+            test_definition_id = test_id    # as needed by API
+        if alias:
+            test_alias = alias  # as needed by API
+
+        if instance_id:
+            url = self.url + "/test-instances/?id=" + instance_id + "&format=json"
+        elif test_id and version:
+            url = self.url + "/test-instances/?test_definition_id=" + test_id + "&version=" + version + "&format=json"
+        else:
+            url = self.url + "/test-instances/?test_alias=" + alias + "&version=" + version + "&format=json"
+        test_instance_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if test_instance_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(test_instance_json))
+        elif test_instance_json.status_code != 200:
+            raise Exception("Error in deleting test instance. Response = " + str(test_instance_json))
 
     def _load_reference_data(self, uri):
         # Load the reference data ("observations").
@@ -1096,10 +1197,11 @@ class TestLibrary(BaseClient):
         if param == "":
             param = "all"
 
-        if param in ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]:
+        valid_params = ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]
+        if param in valid_params:
             url = self.url + "/authorizedcollabparameterrest/?python_client=true&parameters="+param+"&format=json"
         else:
-            raise Exception("Attribute, if specified, has to be one from: cell_type, test_type, score_type, brain_region, model_scope, abstraction_level, data_modalities, species, all]")
+            raise Exception("Specified attribute '{}' is invalid. Valid attributes: {}".format(param, valid_params))
         data = requests.get(url, auth=self.auth, verify=self.verify).json()
         return ast.literal_eval(json.dumps(data))
 
@@ -1128,10 +1230,11 @@ class TestLibrary(BaseClient):
         >>> result = test_library.get_result(result_id="901ac0f3-2557-4ae3-bb2b-37617312da09", order="test")
         """
 
+        valid_orders = ["test", "model", "test_code", "model_instance", "score_type", ""]
         if not result_id:
             raise Exception("result_id needs to be provided for finding a specific result.")
-        elif order not in ["test", "model", ""]:
-            raise Exception("order needs to be specified as 'test', 'model' or ''.")
+        elif order not in valid_orders:
+            raise Exception("order needs to be specified from: {}".format(valid_orders))
         else:
             url = self.url + "/results/?id=" + result_id + "&order=" + order + "&format=json"
         result_json = requests.get(url, auth=self.auth, verify=self.verify)
@@ -1169,8 +1272,9 @@ class TestLibrary(BaseClient):
         >>> results = test_library.list_results(model_version_id="f32776c7-658f-462f-a944-1daf8765ec97", order="test")
         """
 
-        if order not in ["test", "model", ""]:
-            raise Exception("order needs to be specified as 'test', 'model' or ''.")
+        valid_orders = ["test", "model", "test_code", "model_instance", "score_type", ""]
+        if order not in valid_orders:
+            raise Exception("order needs to be specified from: {}".format(valid_orders))
         else:
             params = locals()["filters"]
             url = self.url + "/results/?" + "order=" + order + "&" + urlencode(params) + "&format=json"
@@ -1255,6 +1359,36 @@ class TestLibrary(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception(response.content)
+
+    def delete_result(self, result_id=""):
+        """ONLY FOR SUPERUSERS: Delete a result on the validation framework.
+
+        This allows to delete an existing result info on the validation framework.
+        The `result_id` needs to be specified as input parameter.
+
+        Parameters
+        ----------
+        result_id : UUID
+            System generated unique identifier associated with result.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_catalog.delete_result(result_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
+        """
+
+        if not result_id:
+            raise Exception("result_id needs to be provided for finding a specific result.")
+        else:
+            url = self.url + "/results/?id=" + result_id + "&format=json"
+        model_image_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_image_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_image_json))
+        elif model_image_json.status_code != 200:
+            raise Exception("Error in deleting result. Response = " + str(model_image_json))
 
     def _get_platform(self):
         """
@@ -1497,7 +1631,11 @@ class ModelCatalog(BaseClient):
         >>> models = model_catalog.list_models(cell_type="Pyramidal Cell", brain_region="Hippocampus")
         """
 
+        valid_filters = ["app_id", "name", "alias", "author", "organization", "species", "brain_region", "cell_type", "model_scope", "abstraction_level", "owner", "project", "license"]
         params = locals()["filters"]
+        for filter in params:
+            if filter not in valid_filters:
+                raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
         url = self.url + "/models/?"+urlencode(params)+"&format=json"
         models = requests.get(url, auth=self.auth, verify=self.verify).json()
         return models["models"]
@@ -1745,7 +1883,46 @@ class ModelCatalog(BaseClient):
         if response.status_code == 202:
             return response.json()["uuid"]
         else:
-            raise Exception("Error in updating model. Response = " + str(response.json()))
+            raise Exception("Error in updating model. Response = " + str(response))
+
+    def delete_model(self, model_id="", alias=""):
+        """ONLY FOR SUPERUSERS: Delete a specific model description by its model_id or alias.
+
+        A specific model description can be deleted from the model catalog, along with all
+        associated model instances, images and results, in the following ways (in order of priority):
+
+        1. specify the `model_id`
+        2. specify the `alias` (of the model)
+
+        Parameters
+        ----------
+        model_id : UUID
+            System generated unique identifier associated with model description.
+        alias : string
+            User-assigned unique identifier associated with model description.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_catalog.delete_model(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model_catalog.delete_model(alias="B1")
+        """
+
+        if model_id == "" and alias == "":
+            raise Exception("Model ID or alias needs to be provided for deleting a model.")
+        elif model_id != "":
+            url = self.url + "/models/?id=" + model_id + "&format=json"
+        else:
+            url = self.url + "/models/?alias=" + alias + "&format=json"
+
+        model_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_json))
+        elif model_json.status_code != 200:
+            raise Exception("Error in deleting model. Response = " + str(model_json))
 
     def get_attribute_options(self, param=""):
         """Retrieve valid values for attributes.
@@ -1782,10 +1959,11 @@ class ModelCatalog(BaseClient):
         if param == "":
             param = "all"
 
-        if param in ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]:
+        valid_params = ["cell_type", "test_type", "score_type", "brain_region", "model_scope", "abstraction_level", "data_modalities", "species", "organization", "all"]
+        if param in valid_params:
             url = self.url + "/authorizedcollabparameterrest/?python_client=true&parameters="+param+"&format=json"
         else:
-            raise Exception("Attribute, if specified, has to be one from: cell_type, test_type, score_type, brain_region, model_scope, abstraction_level, data_modalities, species, all]")
+            raise Exception("Specified attribute '{}' is invalid. Valid attributes: {}".format(param, valid_params))
         data = requests.get(url, auth=self.auth, verify=self.verify).json()
         return ast.literal_eval(json.dumps(data))
 
@@ -1982,7 +2160,7 @@ class ModelCatalog(BaseClient):
         model_instances_json = model_instances_json.json()
         return model_instances_json["instances"]
 
-    def add_model_instance(self, model_id="", alias="", source="", version="", description="", morphology="", parameters="", code_format="", hash=""):
+    def add_model_instance(self, model_id="", alias="", source="", version="", description="", parameters="", code_format="", hash="", morphology=""):
         """Register a new model instance.
 
         This allows to add a new instance of an existing model in the model catalog.
@@ -2000,14 +2178,14 @@ class ModelCatalog(BaseClient):
             User-assigned identifier (unique for each model) associated with model instance.
         description : string, optional
             Text describing this specific model instance.
-        morphology : string, optional
-            Complete path to the morphology file employed for this model.
         parameters : string, optional
             Any additional parameters to be submitted to model, or used by it, at runtime.
         code_format : string, optional
             Indicates the language/platform in which the model was developed.
         hash : string, optional
             Similar to a checksum; can be used to identify model instances from their implementation.
+        morphology : string / list, optional
+            URL(s) to the morphology file(s) employed in this model.
 
         Returns
         -------
@@ -2027,7 +2205,8 @@ class ModelCatalog(BaseClient):
                                                   description="basic model variant",
                                                   parameters="",
                                                   code_format="py",
-                                                  hash="")
+                                                  hash="",
+                                                  morphology="")
         """
 
         instance_data = locals()
@@ -2052,7 +2231,7 @@ class ModelCatalog(BaseClient):
         if response.status_code == 201:
             return response.json()["uuid"][0]
         else:
-            raise Exception("Error in adding model instance. Response = " + str(response.json()))
+            raise Exception("Error in adding model instance. Response = " + str(response))
 
     def find_model_instance_else_add(self, model_obj):
         """Find existing model instance; else create a new instance
@@ -2080,7 +2259,7 @@ class ModelCatalog(BaseClient):
         >>> instance_id = model_catalog.find_model_instance_else_add(model)
         """
 
-        if not hasattr(model_obj, "model_instance_uuid"):
+        if not getattr(model_obj, "model_instance_uuid", None):
             # check that the model is registered with the model registry.
             if not hasattr(model_obj, "model_uuid"):
                 raise AttributeError("Model object does not have a 'model_uuid' attribute. "
@@ -2100,7 +2279,7 @@ class ModelCatalog(BaseClient):
             model_instance_uuid = model_obj.model_instance_uuid
         return model_instance_uuid
 
-    def edit_model_instance(self, instance_id="", model_id="", alias="", source=None, version=None, description=None, morphology=None, parameters=None, code_format=None, hash=None):
+    def edit_model_instance(self, instance_id="", model_id="", alias="", source=None, version=None, description=None, parameters=None, code_format=None, hash=None, morphology=None):
         """Edit an existing model instance.
 
         This allows to edit an instance of an existing model in the model catalog.
@@ -2129,14 +2308,14 @@ class ModelCatalog(BaseClient):
             User-assigned identifier (unique for each model) associated with model instance.
         description : string, optional
             Text describing this specific model instance.
-        morphology : string, optional
-            Complete path to the morphology file employed for this model.
         parameters : string, optional
             Any additional parameters to be submitted to model, or used by it, at runtime.
         code_format : string, optional
             Indicates the language/platform in which the model was developed.
         hash : string, optional
             Similar to a checksum; can be used to identify model instances from their implementation.
+        morphology : string / list, optional
+            URL(s) to the morphology file(s) employed in this model.
 
         Returns
         -------
@@ -2151,10 +2330,11 @@ class ModelCatalog(BaseClient):
                                                 description="passive model variant",
                                                 parameters="",
                                                 code_format="py",
-                                                hash="")
+                                                hash="",
+                                                morphology="")
         """
 
-        if instance_id == "" and (model_id == "" or version == "") and (alias == "" or version == ""):
+        if instance_id == "" and (model_id == "" or not version) and (alias == "" or not version):
             raise Exception("instance_id or (model_id, version) or (alias, version) needs to be provided for finding a model instance.")
 
         if instance_id:
@@ -2191,6 +2371,57 @@ class ModelCatalog(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception("Error in editing model instance. Response = " + str(response.json()))
+
+    def delete_model_instance(self, instance_id="", model_id="", alias="", version=""):
+        """ONLY FOR SUPERUSERS: Delete an existing model instance.
+
+        This allows to delete an instance of an existing model in the model catalog.
+        The model instance can be specified in the following ways (in order of priority):
+
+        1. specify `instance_id` corresponding to model instance in model catalog
+        2. specify `model_id` and `version`
+        3. specify `alias` (of the model) and `version`
+
+        Parameters
+        ----------
+        instance_id : UUID
+            System generated unique identifier associated with model instance.
+        model_id : UUID
+            System generated unique identifier associated with model description.
+        alias : string
+            User-assigned unique identifier associated with model description.
+        version : string
+            User-assigned unique identifier associated with model instance.
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_catalog.delete_model_instance(model_id="8c7cb9f6-e380-452c-9e98-e77254b088c5")
+        >>> model_catalog.delete_model_instance(alias="B1", version="1.0")
+        """
+
+        if instance_id == "" and (model_id == "" or not version) and (alias == "" or not version):
+            raise Exception("instance_id or (model_id, version) or (alias, version) needs to be provided for finding a model instance.")
+
+        if instance_id:
+            id = instance_id    # as needed by API
+        if alias:
+            model_alias = alias # as needed by API
+
+        if instance_id:
+            url = self.url + "/model-instances/?id=" + instance_id + "&format=json"
+        elif model_id and version:
+            url = self.url + "/model-instances/?model_id=" + model_id + "&version=" + version + "&format=json"
+        else:
+            url = self.url + "/model-instances/?model_alias=" + alias + "&version=" + version + "&format=json"
+        model_instance_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_instance_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_instance_json))
+        elif model_instance_json.status_code != 200:
+            raise Exception("Error in deleting model instance. Response = " + str(model_instance_json))
 
     def get_model_image(self, image_id=""):
         """Retrieve image info from a model description.
@@ -2231,6 +2462,7 @@ class ModelCatalog(BaseClient):
         """Retrieve all images (figures) associated with a model.
 
         This can be retrieved in the following ways (in order of priority):
+
         1. specify `model_id`
         2. specify `alias` (of the model)
 
@@ -2317,7 +2549,7 @@ class ModelCatalog(BaseClient):
         if response.status_code == 201:
             return response.json()["uuid"][0]
         else:
-            raise Exception("Error in adding image (figure). Response = " + str(response.json()))
+            raise Exception("Error in adding image (figure). Response = " + str(response))
 
     def edit_model_image(self, image_id="", url=None, caption=None):
         """Edit an existing image (figure) metadata.
@@ -2370,6 +2602,36 @@ class ModelCatalog(BaseClient):
             return response.json()["uuid"][0]
         else:
             raise Exception("Error in editing image (figure). Response = " + str(response.json()))
+
+    def delete_model_image(self, image_id=""):
+        """ONLY FOR SUPERUSERS: Delete an image from a model description.
+
+        This allows to delete an image (figure) info from the model catalog.
+        The `image_id` needs to be specified as input parameter.
+
+        Parameters
+        ----------
+        image_id : UUID
+            System generated unique identifier associated with image (figure).
+
+        Note
+        ----
+        * This feature is only for superusers!
+
+        Examples
+        --------
+        >>> model_catalog.delete_model_image(image_id="2b45e7d4-a7a1-4a31-a287-aee7072e3e75")
+        """
+
+        if not image_id:
+            raise Exception("image_id needs to be provided for finding a specific model image (figure).")
+        else:
+            url = self.url + "/images/?id=" + image_id + "&format=json"
+        model_image_json = requests.delete(url, auth=self.auth, verify=self.verify)
+        if model_image_json.status_code == 403:
+            raise Exception("Only SuperUser accounts can delete data. Response = " + str(model_image_json))
+        elif model_image_json.status_code != 200:
+            raise Exception("Error in deleting model image. Response = " + str(model_image_json))
 
 
 def _have_internet_connection():

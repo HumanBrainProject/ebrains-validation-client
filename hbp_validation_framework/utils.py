@@ -592,76 +592,77 @@ def generate_report(username="", password=None, environment="production", result
 
     # Result Pages
     for result_id in valid_uuids:
-            pdf = PDF()
-            # pdf.alias_nb_pages()
-            pdf.add_page()
+        pdf = PDF()
+        # pdf.alias_nb_pages()
+        pdf.add_page()
 
-            # General Result Info
-            model_instance_id = result_data[result_id]["model_version_id"]
-            model_instance_info = model_catalog.get_model_instance(instance_id=model_instance_id)
-            model_id = model_instance_info["model_id"]
-            model_info = model_catalog.get_model(model_id=model_id, instances=False, images=False)
-            test_instance_id = result_data[result_id]["test_code_id"]
-            test_instance_info = test_library.get_test_instance(instance_id=test_instance_id)
-            test_id = test_instance_info["test_definition_id"]
-            test_info = test_library.get_test_definition(test_id=test_id)
-            test_info.pop("codes")
+        # General Result Info
+        model_instance_id = result_data[result_id]["model_version_id"]
+        model_instance_info = model_catalog.get_model_instance(instance_id=model_instance_id)
+        model_id = model_instance_info["model_id"]
+        model_info = model_catalog.get_model(model_id=model_id, instances=False, images=False)
+        test_instance_id = result_data[result_id]["test_code_id"]
+        test_instance_info = test_library.get_test_instance(instance_id=test_instance_id)
+        test_id = test_instance_info["test_definition_id"]
+        test_info = test_library.get_test_definition(test_id=test_id)
+        test_info.pop("codes")
 
-            # pdf.add_page()
-            _print_param_value(pdf, "Result UUID: ", result_id, 14)
-            # Result Info
+        # pdf.add_page()
+        _print_param_value(pdf, "Result UUID: ", result_id, 14)
+        # Result Info
+        pdf.ln(10)
+        pdf.set_font('Arial', 'BU', 14)
+        pdf.ln(10)
+        pdf.cell(190, 10, 'Result Info', 0, 1, 'C')
+        for key, val in result_data[result_id].items():
+            _print_param_value(pdf, str(key + ": "), str(val), 12)
             pdf.ln(10)
-            pdf.set_font('Arial', 'BU', 14)
-            pdf.ln(10)
-            pdf.cell(190, 10, 'Result Info', 0, 1, 'C')
-            for key, val in result_data[result_id].items():
+
+        # Model Info
+        pdf.ln(10)
+        pdf.set_font('Arial', 'BU', 14)
+        pdf.ln(10)
+        pdf.cell(190, 10, 'Model Info', 0, 1, 'C')
+        for key, val in model_info.items():
+            if key == "app":
+                _print_param_value(pdf, "collab_id", str(val["collab_id"]), 12)
+                pdf.ln(10)
+                _print_param_value(pdf, "app_id", str(val["id"]), 12)
+            else:
                 _print_param_value(pdf, str(key + ": "), str(val), 12)
-                pdf.ln(10)
+            pdf.ln(10)
 
-            # Model Info
+        # Model Instance Info
+        pdf.ln(10)
+        pdf.set_font('Arial', 'BU', 14)
+        pdf.ln(10)
+        pdf.cell(190, 10, 'Model Instance Info', 0, 1, 'C')
+        for key, val in model_instance_info.items():
+            _print_param_value(pdf, str(key + ": "), str(val), 12)
             pdf.ln(10)
-            pdf.set_font('Arial', 'BU', 14)
-            pdf.ln(10)
-            pdf.cell(190, 10, 'Model Info', 0, 1, 'C')
-            for key, val in model_info.items():
-                if key == "app":
-                    _print_param_value(pdf, "collab_id", str(val["collab_id"]), 12)
-                    pdf.ln(10)
-                    _print_param_value(pdf, "app_id", str(val["id"]), 12)
-                else:
-                    _print_param_value(pdf, str(key + ": "), str(val), 12)
-                pdf.ln(10)
 
-            # Model Instance Info
+        # Test Info
+        pdf.ln(10)
+        pdf.set_font('Arial', 'BU', 14)
+        pdf.ln(10)
+        pdf.cell(190, 10, 'Test Info', 0, 1, 'C')
+        for key, val in test_info.items():
+            _print_param_value(pdf, str(key + ": "), str(val), 12)
             pdf.ln(10)
-            pdf.set_font('Arial', 'BU', 14)
-            pdf.ln(10)
-            pdf.cell(190, 10, 'Model Instance Info', 0, 1, 'C')
-            for key, val in model_instance_info.items():
-                _print_param_value(pdf, str(key + ": "), str(val), 12)
-                pdf.ln(10)
 
-            # Test Info
+        # Test Instance Info
+        pdf.ln(10)
+        pdf.set_font('Arial', 'BU', 14)
+        pdf.ln(10)
+        pdf.cell(190, 10, 'Test Instance Info', 0, 1, 'C')
+        for key, val in test_instance_info.items():
+            _print_param_value(pdf, str(key + ": "), str(val), 12)
             pdf.ln(10)
-            pdf.set_font('Arial', 'BU', 14)
-            pdf.ln(10)
-            pdf.cell(190, 10, 'Test Info', 0, 1, 'C')
-            for key, val in test_info.items():
-                _print_param_value(pdf, str(key + ": "), str(val), 12)
-                pdf.ln(10)
 
-            # Test Instance Info
-            pdf.ln(10)
-            pdf.set_font('Arial', 'BU', 14)
-            pdf.ln(10)
-            pdf.cell(190, 10, 'Test Instance Info', 0, 1, 'C')
-            for key, val in test_instance_info.items():
-                _print_param_value(pdf, str(key + ": "), str(val), 12)
-                pdf.ln(10)
+        pdf.output(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"), 'F')
 
-            pdf.output(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"), 'F')
-
-            # Additional Files
+        # Additional Files
+        if result_data[result_id]["results_storage"]:
             datastore = CollabDataStore(auth=model_catalog.auth)
             entity_uuid = datastore._translate_URL_to_UUID(result_data[result_id]["results_storage"])
             file_list = datastore.download_data_using_uuid(entity_uuid)
@@ -669,7 +670,7 @@ def generate_report(username="", password=None, environment="production", result
             merger = PdfFileMerger()
             merger.append(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"))
             temp_txt_files = []
-            print "file_list = ", file_list
+
             for datafile in file_list:
                 if datafile.endswith(".pdf"):
                     merger.append(PdfFileReader(file(datafile, 'rb')))
