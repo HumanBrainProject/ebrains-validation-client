@@ -3,6 +3,3 @@ requests
 hbp-service-client
 fpdf
 PyPDF2
-eFELunit
-neuronunit
-efel

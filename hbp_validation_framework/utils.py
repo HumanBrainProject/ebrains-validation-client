@@ -670,7 +670,7 @@ def generate_report(username="", password=None, environment="production", result
             merger = PdfFileMerger()
             merger.append(str("./report/"+filename[:-4]+"_temp_"+str(result_ctr)+".pdf"))
             temp_txt_files = []
-            print "file_list = ", file_list
+
             for datafile in file_list:
                 if datafile.endswith(".pdf"):
                     merger.append(PdfFileReader(file(datafile, 'rb')))

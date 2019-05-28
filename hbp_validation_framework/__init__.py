@@ -287,13 +287,9 @@ class BaseClient(object):
                                                verify=self.verify,
                                                headers=headers)
                     # check good communication
-                    #print "rNMPI2.status_code = ", rNMPI2.status_code
-                    #print "content = ", rNMPI2.content
                     if rNMPI2.status_code == requests.codes.ok:
-                        #import pdb; pdb.set_trace()
                         # check success address
                         if rNMPI2.url == self.url + '/config.json':
-                            # print rNMPI2.text
                             res = rNMPI2.json()
                             self.token = res['auth']['token']['access_token']
                             self.config = res
