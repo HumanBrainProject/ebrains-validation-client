@@ -11,5 +11,3 @@ install:
   - source tests/install.sh
 script:
   - pytest --disable-pytest-warnings --cov=hbp_validation_framework tests/ --environment="production"
-after_success:
-  - coveralls
