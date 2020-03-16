@@ -567,6 +567,7 @@ class TestLibrary(BaseClient):
         The filters may specify one or more attributes that belong
         to a test definition. The following test attributes can be specified:
 
+        * test_id
         * name
         * alias
         * author
@@ -589,26 +590,34 @@ class TestLibrary(BaseClient):
 
         Returns
         -------
-        list
-            List of model descriptions satisfying specified filters.
+        dict
+            Dict with keys as `tests` and `errors`. The former contains a list of test definitions satisfying specified filters, while the latter is a dict with lists of unauthorized (key: `unauthorized`) or invalid test IDs (key: `not found`).
 
         Examples
         --------
-        >>> tests = test_library.list_tests()
-        >>> tests = test_library.list_tests(test_type="single cell activity")
-        >>> tests = test_library.list_tests(test_type="single cell activity", cell_type="Pyramidal Cell")
+        >>> output = test_library.list_tests()
+        >>> output = test_library.list_tests(id=["44edca95-cc04-492d-8c60-49ad36cba123", "01c68387-fcc4-4fd3-85f0-6eb8ce4467a1"])
+        >>> output = test_library.list_tests(test_type="single cell activity")
+        >>> output = test_library.list_tests(test_type="single cell activity", cell_type="Pyramidal Cell")
         """
 
-        valid_filters = ["name", "alias", "author", "species", "age", "brain_region", "cell_type", "data_modality", "test_type", "score_type", "model_scope", "abstraction_level", "data_type", "publication"]
+        valid_filters = ["test_id", "name", "alias", "author", "species", "age", "brain_region", "cell_type", "data_modality", "test_type", "score_type", "model_scope", "abstraction_level", "data_type", "publication"]
         params = locals()["filters"]
         for filter in params:
             if filter not in valid_filters:
                 raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
 
-        params = locals()["filters"]
+        if "test_id" in params:  
+            params["id"] = params["test_id"] # as needed by API         
+            params.pop("test_id")
+        
         url = self.url + "/tests/?"+urlencode(params)+"&format=json"
-        tests = requests.get(url, auth=self.auth, verify=self.verify).json()
-        return tests["tests"]
+        response = requests.get(url, auth=self.auth, verify=self.verify).json()
+        try:
+            output = response.json()
+        except json.JSONDecodeError:
+            raise Exception("Error in list_tests():\n{}".format(response.content))
+        return output
 
     def add_test(self, name="", alias=None, version="", author="", species="",
                       age="", brain_region="", cell_type="", data_modality="",
@@ -1291,17 +1300,22 @@ class TestLibrary(BaseClient):
         Examples
         --------
         >>> results = test_library.list_results()
+        >>> results = test_library.list_results(id=["322c2eea-583a-4bf0-8e9f-90e81c337afa", "55ac45d5-f2cf-42ad-9360-924a24f234d1"])
         >>> results = test_library.list_results(order="test", test_id="7b63f87b-d709-4194-bae1-15329daf3dec")
         >>> results = test_library.list_results(id="901ac0f3-2557-4ae3-bb2b-37617312da09")
         >>> results = test_library.list_results(model_version_id="f32776c7-658f-462f-a944-1daf8765ec97", order="test")
         """
 
-        valid_orders = ["test", "model", "test_code", "model_instance", "score_type", ""]
+        valid_orders = ["result_id", "test", "model", "test_code", "model_instance", "score_type", ""]
         if order not in valid_orders:
             raise Exception("order needs to be specified from: {}".format(valid_orders))
-        else:
-            params = locals()["filters"]
-            url = self.url + "/results/?" + "order=" + order + "&" + urlencode(params) + "&format=json"
+        
+        params = locals()["filters"]
+        if "result_id" in params:  
+            params["id"] = params["result_id"] # as needed by API         
+            params.pop("result_id")    
+        
+        url = self.url + "/results/?" + "order=" + order + "&" + urlencode(params, doseq=True) + "&format=json"
         result_json = requests.get(url, auth=self.auth, verify=self.verify)
         if result_json.status_code != 200:
             raise Exception("Error in retrieving results. Response = " + str(result_json) + ".\nContent = " + str(result_json.content))
@@ -1632,6 +1646,7 @@ class ModelCatalog(BaseClient):
         The filters may specify one or more attributes that belong
         to a model description. The following model attributes can be specified:
 
+        * model_id
         * app_id
         * name
         * alias
@@ -1653,28 +1668,34 @@ class ModelCatalog(BaseClient):
 
         Returns
         -------
-        list
-            List of model descriptions satisfying specified filters.
+        dict
+            Dict with keys as `models` and `errors`. The former contains a list of model descriptions satisfying specified filters, while the latter is a dict with lists of unauthorized (key: `unauthorized`) or invalid model IDs (key: `not found`).
 
         Examples
         --------
-        >>> models = model_catalog.list_models()
-        >>> models = model_catalog.list_models(app_id="39968")
-        >>> models = model_catalog.list_models(cell_type="Pyramidal Cell", brain_region="Hippocampus")
+        >>> output = model_catalog.list_models()
+        >>> output = model_catalog.list_models(model_id = ["0327c2ee-253a-420e-9f3e-e886d7faf3a6", "0154c5a8-05e4-4261-9ab3-d70d7faa10a3"])
+        >>> output = model_catalog.list_models(app_id="39968")
+        >>> output = model_catalog.list_models(cell_type="Pyramidal Cell", brain_region="Hippocampus")
         """
 
-        valid_filters = ["app_id", "collab_id", "name", "alias", "author", "organization", "species", "brain_region", "cell_type", "model_scope", "abstraction_level", "owner", "project", "license"]
+        valid_filters = ["model_id", "app_id", "collab_id", "name", "alias", "author", "organization", "species", "brain_region", "cell_type", "model_scope", "abstraction_level", "owner", "project", "license"]        
         params = locals()["filters"]
         for filter in params:
             if filter not in valid_filters:
                 raise ValueError("The specified filter '{}' is an invalid filter!\nValid filters are: {}".format(filter, valid_filters))
-        url = self.url + "/models/?"+urlencode(params)+"&format=json"
+        
+        if "model_id" in params:  
+            params["id"] = params["model_id"] # as needed by API         
+            params.pop("model_id")
+
+        url = self.url + "/models/?"+urlencode(params, doseq=True)+"&format=json"
         response = requests.get(url, auth=self.auth, verify=self.verify)
         try:
-            models = response.json()
+            output = response.json()
         except json.JSONDecodeError:
             raise Exception("Error in list_models():\n{}".format(response.content))
-        return models["models"]
+        return output
 
     def register_model(self, app_id="", name="", alias=None, author="", organization="", private=False,
                        species="", brain_region="", cell_type="", model_scope="", abstraction_level="", owner="", project="",
